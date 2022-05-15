@@ -27,14 +27,54 @@ public:
   void generateCave();
 
   /*
+   *  Creates a new grid with width `width` and height `height`
+   */
+  void resize(int width, int height);
+
+  /*
    *  Returns a copy of the cave grid
    */
   Grid getGrid() { return m_grid; }
 
   /*
-   *  Creates a new grid with width `width` and height `height`
+   *  Returns the seed parameter
    */
-  void resize(int width, int height);
+  int getSeed() { return m_seed; }
+
+  /*
+   *  Returns the threshold parameter
+   */
+  int getThreshold() { return m_threshold; }
+
+  /*
+   *  Returns the rockRatio parameter
+   */
+  int getRockRatio() { return m_rockRatio; }
+
+  /*
+   *  Returns the steps parameter
+   */
+  int getSteps() { return m_steps; }
+
+  /*
+   *  Sets the seed to `seed`
+   */
+  void setSeed(int seed) { m_seed = seed; }
+
+  /*
+   *  Sets the threshold parameter to `threshold`
+   */
+  void setThreshold(int threshold) { m_threshold = threshold; }
+
+  /*
+   *  Sets the rock ratio parameter to `rockRatio`
+   */
+  void setRockRatio(int rockRatio) { m_rockRatio = rockRatio; }
+
+  /*
+   *  Sets the steps parameter to `steps`
+   */
+  void setSteps(int steps) { m_steps = steps; }
 
 private:
   Grid m_grid;     // Grid representing the cave
