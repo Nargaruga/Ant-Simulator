@@ -17,12 +17,25 @@ int countNearbyRocks(std::vector<Cell> neighbours) {
   return count + (8 - neighbours.size());
 }
 
+CaveGenerator::CaveGenerator(int width, int height, int seed, int rockRatio,
+                             int threshold, int steps)
+    : m_grid(width, height), m_width(width), m_height(height), m_seed(seed),
+      m_rockRatio(rockRatio), m_threshold(threshold), m_steps(steps) {
+
+  if (width < 0 || height < 0 || rockRatio < 0 || rockRatio > 100 ||
+      threshold < 0 || threshold > 8 || steps < 0)
+    std::invalid_argument("Arguments do not fall in the required ranges.");
+}
+
 void CaveGenerator::generateCave() {
   initialize();
   simulate();
 }
 
 void CaveGenerator::resize(int width, int height) {
+  if (width < 0 || height < 0)
+    throw std::invalid_argument("Width and height must be greater than 0.");
+
   m_width = width;
   m_height = height;
   m_grid = Grid(width, height);
@@ -31,9 +44,10 @@ void CaveGenerator::resize(int width, int height) {
 void CaveGenerator::initialize() {
   std::default_random_engine rng(m_seed);
 
-  for (size_t x = 0; x < m_grid.getCols(); x++) {
-    for (size_t y = 0; y < m_grid.getRows(); y++) {
-      if (m_grid.isBorder(x, y) || (rng() % 100 < m_rockRatio))
+  for (int x = 0; x < m_grid.getCols(); x++) {
+    for (int y = 0; y < m_grid.getRows(); y++) {
+      if (m_grid.isBorder(x, y) ||
+          (static_cast<int>(rng() % 100) < m_rockRatio))
         m_grid.setCellState(x, y, Cell::State::INNER_ROCK);
       else
         m_grid.setCellState(x, y, Cell::State::FLOOR);
@@ -44,8 +58,8 @@ void CaveGenerator::initialize() {
 void CaveGenerator::step() {
   Grid updatedGrid(m_grid);
 
-  for (size_t x = 0; x < m_grid.getCols(); x++) {
-    for (size_t y = 0; y < m_grid.getRows(); y++) {
+  for (int x = 0; x < m_grid.getCols(); x++) {
+    for (int y = 0; y < m_grid.getRows(); y++) {
       std::vector<Cell> neighbourhood = m_grid.getMooreNeighbourhood(x, y);
 
       int neighbours = countNearbyRocks(neighbourhood);
@@ -62,7 +76,7 @@ void CaveGenerator::step() {
 }
 
 void CaveGenerator::simulate() {
-  for (size_t i = 0; i < m_steps; i++) {
+  for (int i = 0; i < m_steps; i++) {
     step();
   }
 }
@@ -70,8 +84,8 @@ void CaveGenerator::simulate() {
 void CaveGenerator::highlightWalls() {
   Grid updatedGrid(m_grid);
 
-  for (size_t x = 0; x < m_grid.getCols(); x++) {
-    for (size_t y = 0; y < m_grid.getRows(); y++) {
+  for (int x = 0; x < m_grid.getCols(); x++) {
+    for (int y = 0; y < m_grid.getRows(); y++) {
       std::vector<Cell> neighbourhood = m_grid.getMooreNeighbourhood(x, y);
 
       int neighbours = countNearbyRocks(neighbourhood);

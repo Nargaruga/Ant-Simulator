@@ -35,7 +35,14 @@ public:
   /*
    *  Set the state of the cell as `state`
    */
-  void setState(State state);
+  void setState(State state) { m_state = state; };
+
+  /*
+   *  Returns true if the cell contains rock, false otherwise
+   */
+  bool isRock() {
+    return m_state == State::INNER_ROCK || m_state == State::OUTER_ROCK;
+  }
 
   /*
    *  Returns the cell's color
@@ -48,7 +55,7 @@ public:
     case State::OUTER_ROCK: {
       return Qt::red;
     }
-    case State::FLOOR: {
+    default: {
       return Qt::white;
     }
     }
@@ -57,17 +64,12 @@ public:
   /*
    *  Returns the x position of the cell
    */
-  int getX();
+  int getX() { return m_x; }
 
   /*
    *  Returns the y position of the cell
    */
-  int getY();
-
-  /*
-   *  Returns true if the cell contains rock, false otherwise
-   */
-  bool isRock();
+  int getY() { return m_y; }
 
 private:
   int m_x = 0;                  // x position

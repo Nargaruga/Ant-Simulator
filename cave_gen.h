@@ -7,18 +7,17 @@ class CaveGenerator {
 public:
   /*
    *  Creates a cave generator with the following parameters:
-   *  - width: number of columns
-   *  - height: number of rows
-   *  - side: side of the cells
+   *  - width: number of columns (0 <= width)
+   *  - height: number of rows (0 <= height)
    *  - seed: seed for the initial configuration
    *  - rockRatio: ratio of rocks in the initial configuration
+   *    (0 <= rockRatio <= 100)
    *  - threshold: number of rock neighbours for a cell to turn into a rock
-   *  - steps: number of iterations
+   *    (0 <= threshold <= 8)
+   *  - steps: number of iterations (0 <= steps)
    */
   CaveGenerator(int width = 300, int height = 300, int seed = 0,
-                int rockRatio = 50, int threshold = 5, int steps = 4)
-      : m_grid(width, height), m_width(width), m_height(height), m_seed(seed),
-        m_rockRatio(rockRatio), m_threshold(threshold), m_steps(steps){};
+                int rockRatio = 50, int threshold = 5, int steps = 4);
 
   /*
    *  Generates a new cave based on the generator's parameters and stores it in
@@ -42,9 +41,21 @@ public:
   int getSeed() { return m_seed; }
 
   /*
+   * Returns a pair containing the minimum and maximum values for the seed
+   * parameter
+   */
+  std::pair<int, int> getSeedRange() { return std::pair(INT_MIN, INT_MAX); }
+
+  /*
    *  Returns the threshold parameter
    */
   int getThreshold() { return m_threshold; }
+
+  /*
+   * Returns a pair containing the minimum and maximum values for the threshold
+   * parameter
+   */
+  std::pair<int, int> getThresholdRange() { return std::pair(0, 8); }
 
   /*
    *  Returns the rockRatio parameter
@@ -52,9 +63,21 @@ public:
   int getRockRatio() { return m_rockRatio; }
 
   /*
+   * Returns a pair containing the minimum and maximum values for the rockRatio
+   * parameter
+   */
+  std::pair<int, int> getRockRatioRange() { return std::pair(0, 100); }
+
+  /*
    *  Returns the steps parameter
    */
   int getSteps() { return m_steps; }
+
+  /*
+   * Returns a pair containing the minimum and maximum values for the steps
+   * parameter
+   */
+  std::pair<int, int> getStepsRange() { return std::pair(0, INT_MAX); }
 
   /*
    *  Sets the seed to `seed`

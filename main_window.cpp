@@ -42,13 +42,20 @@ void MainWindow::prepareGenerator() {
 
 void MainWindow::prepareGUI() {
   // Set up spin boxes
-  m_gui->seedSB->setRange(INT_MIN, INT_MAX);
+  m_gui->seedSB->setRange(m_gen.getSeedRange().first,
+                          m_gen.getSeedRange().second);
   m_gui->seedSB->setValue(m_gen.getSeed());
-  m_gui->thresholdSB->setRange(0, 8);
+
+  m_gui->thresholdSB->setRange(m_gen.getThresholdRange().first,
+                               m_gen.getThresholdRange().second);
   m_gui->thresholdSB->setValue(m_gen.getThreshold());
-  m_gui->rockRatioSB->setRange(0, 100);
+
+  m_gui->rockRatioSB->setRange(m_gen.getRockRatioRange().first,
+                               m_gen.getRockRatioRange().second);
   m_gui->rockRatioSB->setValue(m_gen.getRockRatio());
-  m_gui->stepsSB->setRange(0, 15);
+
+  m_gui->stepsSB->setRange(m_gen.getStepsRange().first,
+                           m_gen.getStepsRange().second);
   m_gui->stepsSB->setValue(m_gen.getSteps());
 
   // Setup and populate the scene
@@ -67,8 +74,8 @@ void MainWindow::prepareGUI() {
 
 void MainWindow::populateScene() {
   Grid grid = m_gen.getGrid();
-  for (size_t x = 0; x < grid.getCols(); x++) {
-    for (size_t y = 0; y < grid.getRows(); y++) {
+  for (int x = 0; x < grid.getCols(); x++) {
+    for (int y = 0; y < grid.getRows(); y++) {
       Cell cell = grid.getCell(x, y);
       // Draw the cell
       QGraphicsRectItem *item = new QGraphicsRectItem(
