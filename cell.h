@@ -1,7 +1,8 @@
 #ifndef CELL_H
 #define CELL_H
 
-#include "qcolor.h"
+#include "colors.h"
+#include <QColor>
 #include <random>
 
 /*
@@ -14,7 +15,7 @@ public:
   /*
    *  Possible states of the cell
    */
-  enum State { FLOOR, INNER_ROCK, OUTER_ROCK };
+  enum State { FLOOR, INNER_ROCK, OUTER_ROCK, ORGANISM };
 
   /*
    *  Creates a square cell with default values
@@ -38,43 +39,71 @@ public:
   void setState(State state) { m_state = state; };
 
   /*
-   *  Returns true if the cell contains rock, false otherwise
+   *  Sets the light level to `light`
    */
-  bool isRock() {
-    return m_state == State::INNER_ROCK || m_state == State::OUTER_ROCK;
-  }
+  void setLightLevel(float light) { m_lightLevel = light; };
 
   /*
    *  Returns the cell's color
    */
-  QColor getColor() {
+  QColor getColor() const {
     switch (m_state) {
     case State::INNER_ROCK: {
-      return Qt::black;
+      return innerRockColor;
     }
     case State::OUTER_ROCK: {
-      return Qt::red;
+      return outerRockColor;
     }
-    default: {
-      return Qt::white;
+    case State::ORGANISM: {
+      return organismColor;
     }
+    case State::FLOOR: {
+      QColor color = blend(floorColor, Qt::yellow, m_lightLevel);
+      return color;
+    }
+
+    default:
+      return State::FLOOR;
     }
   }
 
   /*
    *  Returns the x position of the cell
    */
-  int getX() { return m_x; }
+  int getX() const { return m_x; }
 
   /*
    *  Returns the y position of the cell
    */
-  int getY() { return m_y; }
+  int getY() const { return m_y; }
+
+  /*
+   *  Returns the cell's light level
+   */
+  float getLightLevel() const { return m_lightLevel; }
+
+  /*
+   *  Returns true if the cell contains rock, false otherwise
+   */
+  bool isRock() const {
+    return m_state == State::INNER_ROCK || m_state == State::OUTER_ROCK;
+  }
+
+  /*
+   *  Returns true if the cell contains an organism, false otherwise
+   */
+  bool isOrganism() const { return m_state == State::ORGANISM; }
+
+  /*
+   *  Returns true if the cell is empty (just floor), false otherwise
+   */
+  bool isFloor() const { return m_state == State::FLOOR; }
 
 private:
   int m_x = 0;                  // x position
   int m_y = 0;                  // y position
   State m_state = State::FLOOR; // state of the cell
+  float m_lightLevel = 0.0;     // Light level of the cell
 };
 
 #endif

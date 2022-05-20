@@ -11,15 +11,20 @@ CONFIG += c++17
 SOURCES += \
     cave_gen.cpp \
     cell.cpp \
+    custom_graphics_scene.cpp \
     grid.cpp \
     main.cpp \
-    main_window.cpp
+    main_window.cpp \
+    population_sim.cpp
 
 HEADERS += \
     cave_gen.h \
     cell.h \
+    colors.h \
+    custom_graphics_scene.h \
     grid.h \
-    main_window.h
+    main_window.h \
+    population_sim.h
 
 FORMS += \
     main_window.ui

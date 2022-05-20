@@ -1,9 +1,30 @@
 #include "grid.h"
+#include <algorithm>
+#include <cmath>
+
+float lerp(int a, int b, float r) { return a * r + b * (1 - r); }
 
 Grid::Grid(int rows, int cols) : m_rows(rows), m_cols(cols) {
   if (rows < 0 || cols < 0)
     throw std::invalid_argument(
         "The number of rows and columns cannot be negative.");
+
+  for (int y = 0; y < rows; y++) {
+    for (int x = 0; x < cols; x++) {
+      m_cells.push_back(Cell(x, y));
+    }
+  }
+}
+
+void Grid::resize(int rows, int cols) {
+  if (rows < 0 || cols < 0)
+    throw std::invalid_argument(
+        "The number of rows and columns cannot be negative.");
+
+  m_cells.clear();
+
+  m_rows = rows;
+  m_cols = cols;
 
   for (int y = 0; y < rows; y++) {
     for (int x = 0; x < cols; x++) {
@@ -19,28 +40,85 @@ void Grid::setCellState(int x, int y, Cell::State state) {
   m_cells[y * m_cols + x].setState(state);
 }
 
-bool Grid::isBorder(int x, int y) {
+void Grid::setLightSource(int x, int y) {
+  if (x < 0 || y < 0 || x >= m_cols || y >= m_rows)
+    throw std::invalid_argument("Coordinates are out of bounds.");
+
+  // The light source must be on a floor tile
+  if (m_cells[y * m_cols + x].isRock())
+    return;
+
+  // Set the light source
+  Cell &tmp = m_cells[y * m_cols + x];
+  tmp.setLightLevel(1.0);
+  m_lightSource = tmp;
+
+  // Set the lightning value for each cell
+  for (Cell &cell : m_cells) {
+    if (!cell.isRock()) {
+      int distance =
+          ceil(sqrt(pow(x - cell.getX(), 2) + pow(y - cell.getY(), 2)));
+      bool visible = isVisible(x, y, cell.getX(), cell.getY());
+      float light = 0.0;
+
+      if (visible) {
+        if (distance == 0)
+          light = 1.0;
+        else
+          light = 1.0 / (distance / 2);
+      }
+
+      cell.setLightLevel(light);
+    }
+  }
+}
+
+void Grid::spawnOrganism(int x, int y) {
+  m_cells[y * m_cols + x].setState(Cell::State::ORGANISM);
+}
+
+void Grid::clearCell(int x, int y) {
+  m_cells[y * m_cols + x].setState(Cell::State::FLOOR);
+}
+
+bool Grid::isVisible(int x0, int y0, int x1, int y1) const {
+  int dist = std::max(abs(x0 - x1), abs(y0 - y1));
+
+  for (int step = 0; step <= dist; step++) {
+    float t = dist == 0 ? 0 : (float)step / dist;
+
+    int x = round(lerp(x0, x1, t));
+    int y = round(lerp(y0, y1, t));
+
+    if (m_cells[y * m_cols + x].isRock())
+      return false;
+  }
+
+  return true;
+}
+
+bool Grid::isBorder(int x, int y) const {
   if (x == 0 || x == m_cols - 1 || y == 0 || y == m_rows - 1)
     return true;
   else
     return false;
 }
 
-Cell Grid::getCell(int i) {
+const Cell &Grid::getCell(int i) const {
   if (i < 0 || i >= m_cols * m_rows)
     throw std::invalid_argument("Out of bounds coordinates.");
 
   return m_cells[i];
 }
 
-Cell Grid::getCell(int x, int y) {
+const Cell &Grid::getCell(int x, int y) const {
   if (x < 0 || y < 0 || x >= m_cols || y >= m_rows)
     throw std::invalid_argument("Coordinates are out of bounds.");
 
   return m_cells[y * m_cols + x];
 }
 
-std::vector<Cell> Grid::getMooreNeighbourhood(int x, int y) {
+std::vector<Cell> Grid::getMooreNeighbourhood(int x, int y) const {
   if (x < 0 || y < 0 || x >= m_cols || y >= m_rows)
     throw std::invalid_argument("Out of bounds coordinates.");
 
@@ -56,8 +134,27 @@ std::vector<Cell> Grid::getMooreNeighbourhood(int x, int y) {
   return neighbourhood;
 }
 
-int Grid::getSize() { return m_rows * m_cols; }
+std::vector<Cell> Grid::getNeumannNeighbourhood(int x, int y) const {
+  if (x < 0 || y < 0 || x >= m_cols || y >= m_rows)
+    throw std::invalid_argument("Out of bounds coordinates.");
 
-int Grid::getCols() { return m_cols; }
+  std::vector<Cell> neighbourhood;
 
-int Grid::getRows() { return m_rows; }
+  for (int i = x - 1; i <= x + 1; i++) {
+    if (i != x && i >= 0 && i < m_cols)
+      neighbourhood.push_back(getCell(i, y));
+  }
+
+  for (int j = y - 1; j <= y + 1; j++) {
+    if (j != y && j >= 0 && j < m_rows)
+      neighbourhood.push_back(getCell(x, j));
+  }
+
+  return neighbourhood;
+}
+
+int Grid::getSize() const { return m_rows * m_cols; }
+
+int Grid::getCols() const { return m_cols; }
+
+int Grid::getRows() const { return m_rows; }

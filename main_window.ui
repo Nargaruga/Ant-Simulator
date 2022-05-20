@@ -27,58 +27,100 @@
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QPushButton" name="generateCaveBtn">
-        <property name="text">
-         <string>New Cave</string>
-        </property>
-       </widget>
-      </item>
      </layout>
     </item>
     <item>
-     <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="0">
-       <widget class="QLabel" name="seedLbl">
-        <property name="text">
-         <string>Seed</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QLabel" name="thresholdLbl">
-        <property name="text">
-         <string>Threshold</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QLabel" name="rockRatioLbl">
-        <property name="text">
-         <string>Rock ratio</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3">
-       <widget class="QLabel" name="stepsLbl">
-        <property name="text">
-         <string>Steps</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QSpinBox" name="seedSB"/>
-      </item>
-      <item row="1" column="1">
-       <widget class="QSpinBox" name="thresholdSB"/>
-      </item>
-      <item row="1" column="2">
-       <widget class="QSpinBox" name="rockRatioSB"/>
-      </item>
-      <item row="1" column="3">
-       <widget class="QSpinBox" name="stepsSB"/>
-      </item>
-     </layout>
+     <widget class="QGroupBox" name="caveBox">
+      <property name="title">
+       <string>Cave Generation</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <layout class="QGridLayout" name="parametersGrid">
+         <item row="0" column="0">
+          <widget class="QLabel" name="seedLbl">
+           <property name="text">
+            <string>Seed</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="thresholdLbl">
+           <property name="text">
+            <string>Threshold</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="rockRatioLbl">
+           <property name="text">
+            <string>Rock ratio</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QLabel" name="stepsLbl">
+           <property name="text">
+            <string>Steps</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QSpinBox" name="seedSB"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QSpinBox" name="thresholdSB"/>
+         </item>
+         <item row="1" column="2">
+          <widget class="QSpinBox" name="rockRatioSB"/>
+         </item>
+         <item row="1" column="3">
+          <widget class="QSpinBox" name="stepsSB"/>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QPushButton" name="generateCaveBtn">
+         <property name="text">
+          <string>New Cave</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="simBox">
+      <property name="title">
+       <string>Simulation</string>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QPushButton" name="initSimBtn">
+         <property name="text">
+          <string>Initialize</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="startSimBtn">
+         <property name="text">
+          <string>Start</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="stopSimBtn">
+         <property name="text">
+          <string>Stop</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout"/>
     </item>
    </layout>
   </widget>
