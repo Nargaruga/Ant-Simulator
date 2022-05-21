@@ -26,28 +26,26 @@ public:
 private slots:
   void onNewCaveRequested();
 
-  void onCaveReady(Grid grid);
+  void onSimInitRequested();
 
-  void onSimulationInitialized();
+  void onSimStartRequested();
 
-  void onSimulationStarted();
+  void onSimStopRequested();
 
-  void onSimulationStopped();
+  void onTimeout();
 
-  void onSimulationStep();
+  void onCanvasClick(QPointF coords);
 
-  void onSeedValueChanged(int newValue);
-
-  void onThresholdValueChanged(int newValue);
-
-  void onRockRatioValueChanged(int newValue);
-
-  void onStepsValueChanged(int newValue);
-
-  void onCanvasClicked(QPointF coords);
+  void onGridReady(Grid grid);
 
 signals:
   void startCaveGeneration(int rows, int cols);
+
+  void initializeSim(Grid grid);
+
+  void performSimStep(Grid grid);
+
+  void spawnLightSource(Grid grid, int x, int y);
 
 private:
   Ui::MainWindow *m_gui;        // Class responsible for the GUI
@@ -62,7 +60,8 @@ private:
   int m_cols = 128;     // Number of grid columns
   int m_rows = 64;      // Number of grid rows
   int m_cellSide = 5;   // Width of grid cells, in pixels
-  QThread m_worker;     // Worker thread
+  QThread m_genWorker;  // Cave generation thread
+  QThread m_simWorker;  // Population simulation thread
 
   /*
    * Connect the GUI items' signals to the relative slots

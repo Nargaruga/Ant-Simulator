@@ -94,8 +94,13 @@ public slots:
    */
   void generateCave(int rows, int cols);
 
+  /*
+   *  Spawns a light source at column `x` and row `y` in `grid`
+   */
+  void spawnLightSource(Grid grid, int x, int y);
+
 signals:
-  void caveReady(Grid grid);
+  void gridReady(Grid grid);
 
 private:
   int m_seed;      // Seed for the initial configuration

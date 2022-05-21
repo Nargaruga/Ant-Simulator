@@ -17,22 +17,23 @@ public:
   Grid(int rows = 0, int cols = 0);
 
   /*
-   *  Resizes the grid to have `rows` rows and `cols` columns
-   */
-  void resize(int rows, int cols);
-
-  /*
    *  Sets the state of the cell situated at column `x` and row `y` to `state`
    */
   void setCellState(int x, int y, Cell::State state);
 
   /*
-   *  Sets the cell situated at column `x` and row `y` as light source
+   *  Sets the light level of the cell situated at column `x` and row `y` to
+   *  `light`
    */
-  void setLightSource(int x, int y);
+  void setCellLightLevel(int x, int y, float light);
 
   /*
-   *  Spawns an organism at column `x` and row `y` as light source
+   *  Resizes the grid to have `rows` rows and `cols` columns
+   */
+  void resize(int rows, int cols);
+
+  /*
+   *  Spawns an organism at column `x` and row `y`
    */
   void spawnOrganism(int x, int y);
 
@@ -54,47 +55,58 @@ public:
   bool isBorder(int x, int y) const;
 
   /*
-   *  Returns a const reference to the i-th cell
+   *  Returns a copy of the i-th cell
    */
-  const Cell &getCell(int i) const;
+  Cell getCell(int i) const {
+    if (i < 0 || i >= m_cols * m_rows)
+      throw std::invalid_argument("Out of bounds coordinates.");
+
+    return m_cells[i];
+  }
 
   /*
    *  Returns a copy of the cell at column `x` and row `y`
    */
-  const Cell &getCell(int x, int y) const;
+  Cell getCell(int x, int y) const {
+    if (x < 0 || y < 0 || x >= m_cols || y >= m_rows)
+      throw std::invalid_argument("Coordinates are out of bounds.");
+
+    return m_cells[y * m_cols + x];
+  }
 
   /*
    *  Returns a vector containing the Moore neighbourhood of the cell found
-   *  at column `x` and row `y`
+   *  at column `x` and row `y`. `radius` denotes the radius of the
+   *  neighbourhood
    */
-  std::vector<Cell> getMooreNeighbourhood(int x, int y) const;
+  std::vector<Cell> getMooreNeighbourhood(int x, int y, int radius = 1) const;
 
   /*
    *  Returns a vector containing the Von Neumann neighbourhood of the cell
-   *  found at column `x` and row `y`
+   *  found at column `x` and row `y`. `radius` denotes the radius of the
+   *  neighbourhood
    */
-  std::vector<Cell> getNeumannNeighbourhood(int x, int y) const;
+  std::vector<Cell> getNeumannNeighbourhood(int x, int y, int radius = 1) const;
 
   /*
    *  Returns the size of the grid
    */
-  int getSize() const;
+  int getSize() const { return m_rows * m_cols; }
 
   /*
    *  Returns the number of columns
    */
-  int getCols() const;
+  int getCols() const { return m_cols; }
 
   /*
    *  Returns the number of rows
    */
-  int getRows() const;
+  int getRows() const { return m_rows; }
 
 private:
   int m_rows;                // Number of rows
   int m_cols;                // Number of columns
   std::vector<Cell> m_cells; // Cells of the grid
-  Cell m_lightSource;        // Light source
 };
 
 #endif

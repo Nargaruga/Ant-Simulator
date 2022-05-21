@@ -2,35 +2,32 @@
 #define POPULATION_SIM_H
 
 #include "grid.h"
+#include <QObject>
 
-class PopulationSimulator {
+class PopulationSimulator : public QObject {
+  Q_OBJECT
+
 public:
-  PopulationSimulator(Grid &grid, int seed = 0);
+  PopulationSimulator(int seed = 0);
 
-  /*
-   *  Returns a copy of the grid TODO
-   */
-  Grid getGrid() { return m_grid; }
+public slots:
 
   /*
    *  Sets up the initial state of the population, randomly creating a random
    *  cluster of individuals
    */
-  void initialize();
+  void initialize(Grid grid);
 
   /*
    *  Performs one step of the CA simulation on `m_grid`
    */
-  void step();
+  void step(Grid grid);
+
+signals:
+  void popReady(Grid grid);
 
 private:
-  Grid &m_grid; // Grid representing the environment
-  int m_seed;   // Seed for the rng
-
-  /*
-   *  Builds a cluster centered at column `x` and row `y`
-   */
-  void buildCluster(int x, int y);
+  int m_seed; // Seed for the rng
 };
 
 #endif // POPULATION_SIM_H

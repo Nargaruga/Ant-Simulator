@@ -47,24 +47,28 @@ public:
    *  Returns the cell's color
    */
   QColor getColor() const {
+    QColor baseColor;
+
     switch (m_state) {
     case State::INNER_ROCK: {
-      return innerRockColor;
+      baseColor = innerRockColor;
+      break;
     }
     case State::OUTER_ROCK: {
-      return outerRockColor;
+      baseColor = outerRockColor;
+      break;
     }
     case State::ORGANISM: {
-      return organismColor;
+      baseColor = organismColor;
+      break;
     }
     case State::FLOOR: {
-      QColor color = blend(floorColor, Qt::yellow, m_lightLevel);
-      return color;
+      baseColor = floorColor;
+      break;
+    }
     }
 
-    default:
-      return State::FLOOR;
-    }
+    return blend(baseColor, Qt::yellow, m_lightLevel);
   }
 
   /*
@@ -88,6 +92,16 @@ public:
   bool isRock() const {
     return m_state == State::INNER_ROCK || m_state == State::OUTER_ROCK;
   }
+
+  /*
+   *  Returns true if the cell is a wall, false otherwise
+   */
+  bool isWall() const { return m_state == State::OUTER_ROCK; }
+
+  /*
+   *  Returns true if the cell is inner rock, false otherwise
+   */
+  bool isInnerRock() const { return m_state == State::INNER_ROCK; }
 
   /*
    *  Returns true if the cell contains an organism, false otherwise

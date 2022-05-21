@@ -32,7 +32,7 @@ void CaveGenerator::generateCave(int rows, int cols) {
   initialize(grid);
   simulate(grid);
 
-  emit caveReady(grid);
+  emit gridReady(grid);
 }
 
 void CaveGenerator::initialize(Grid &grid) {
@@ -90,4 +90,41 @@ void CaveGenerator::highlightWalls(Grid &grid) {
   }
 
   grid = updatedGrid;
+}
+
+void CaveGenerator::spawnLightSource(Grid grid, int lightX, int lightY) {
+  if (lightX < 0 || lightY < 0 || lightX >= grid.getCols() ||
+      lightY >= grid.getRows())
+    throw std::invalid_argument("Coordinates are out of bounds.");
+
+  // The light source must be on a floor tile
+  if (grid.getCell(lightX, lightY).isRock())
+    return;
+
+  // Set the light source
+  grid.setCellLightLevel(lightX, lightY, 1.0);
+
+  // Set the lightning value for each cell
+  for (int x = 0; x < grid.getCols(); x++) {
+    for (int y = 0; y < grid.getRows(); y++) {
+      Cell cell = grid.getCell(x, y);
+
+      if (!cell.isInnerRock()) {
+        int distance = ceil(sqrt(pow(lightX - x, 2) + pow(lightY - y, 2)));
+        bool visible = grid.isVisible(lightX, lightY, x, y);
+        float light = 0.0;
+
+        if (visible) {
+          if (distance == 0)
+            light = 1.0;
+          else
+            light = 1.0 / (distance / 2);
+        }
+
+        grid.setCellLightLevel(x, y, light);
+      }
+    }
+  }
+
+  emit gridReady(grid);
 }

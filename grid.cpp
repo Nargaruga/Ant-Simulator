@@ -40,37 +40,16 @@ void Grid::setCellState(int x, int y, Cell::State state) {
   m_cells[y * m_cols + x].setState(state);
 }
 
-void Grid::setLightSource(int x, int y) {
+void Grid::setCellLightLevel(int x, int y, float light) {
   if (x < 0 || y < 0 || x >= m_cols || y >= m_rows)
     throw std::invalid_argument("Coordinates are out of bounds.");
 
-  // The light source must be on a floor tile
-  if (m_cells[y * m_cols + x].isRock())
-    return;
+  if (light > 1.0)
+    light = 1.0;
+  else if (light < 0.0)
+    light = 0.0;
 
-  // Set the light source
-  Cell &tmp = m_cells[y * m_cols + x];
-  tmp.setLightLevel(1.0);
-  m_lightSource = tmp;
-
-  // Set the lightning value for each cell
-  for (Cell &cell : m_cells) {
-    if (!cell.isRock()) {
-      int distance =
-          ceil(sqrt(pow(x - cell.getX(), 2) + pow(y - cell.getY(), 2)));
-      bool visible = isVisible(x, y, cell.getX(), cell.getY());
-      float light = 0.0;
-
-      if (visible) {
-        if (distance == 0)
-          light = 1.0;
-        else
-          light = 1.0 / (distance / 2);
-      }
-
-      cell.setLightLevel(light);
-    }
-  }
+  m_cells[y * m_cols + x].setLightLevel(light);
 }
 
 void Grid::spawnOrganism(int x, int y) {
@@ -104,28 +83,14 @@ bool Grid::isBorder(int x, int y) const {
     return false;
 }
 
-const Cell &Grid::getCell(int i) const {
-  if (i < 0 || i >= m_cols * m_rows)
-    throw std::invalid_argument("Out of bounds coordinates.");
-
-  return m_cells[i];
-}
-
-const Cell &Grid::getCell(int x, int y) const {
-  if (x < 0 || y < 0 || x >= m_cols || y >= m_rows)
-    throw std::invalid_argument("Coordinates are out of bounds.");
-
-  return m_cells[y * m_cols + x];
-}
-
-std::vector<Cell> Grid::getMooreNeighbourhood(int x, int y) const {
+std::vector<Cell> Grid::getMooreNeighbourhood(int x, int y, int radius) const {
   if (x < 0 || y < 0 || x >= m_cols || y >= m_rows)
     throw std::invalid_argument("Out of bounds coordinates.");
 
   std::vector<Cell> neighbourhood;
 
-  for (int i = x - 1; i <= x + 1; i++) {
-    for (int j = y - 1; j <= y + 1; j++) {
+  for (int i = x - radius; i <= x + radius; i++) {
+    for (int j = y - radius; j <= y + radius; j++) {
       if ((i != x || j != y) && i >= 0 && i < m_cols && j >= 0 && j < m_rows)
         neighbourhood.push_back(getCell(i, j));
     }
@@ -134,7 +99,9 @@ std::vector<Cell> Grid::getMooreNeighbourhood(int x, int y) const {
   return neighbourhood;
 }
 
-std::vector<Cell> Grid::getNeumannNeighbourhood(int x, int y) const {
+// TODO use radius
+std::vector<Cell> Grid::getNeumannNeighbourhood(int x, int y,
+                                                int radius) const {
   if (x < 0 || y < 0 || x >= m_cols || y >= m_rows)
     throw std::invalid_argument("Out of bounds coordinates.");
 
@@ -152,9 +119,3 @@ std::vector<Cell> Grid::getNeumannNeighbourhood(int x, int y) const {
 
   return neighbourhood;
 }
-
-int Grid::getSize() const { return m_rows * m_cols; }
-
-int Grid::getCols() const { return m_cols; }
-
-int Grid::getRows() const { return m_rows; }

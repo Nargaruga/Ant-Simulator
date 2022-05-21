@@ -5,22 +5,26 @@
 #include <iostream>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), m_gui(new Ui::MainWindow), m_sim(m_grid) {
+    : QMainWindow(parent), m_gui(new Ui::MainWindow) {
   m_gui->setupUi(this);
   m_timer = new QTimer(this);
 
-  m_gen.moveToThread(&m_worker);
+  m_gen.moveToThread(&m_genWorker);
+  m_sim.moveToThread(&m_simWorker);
 
   m_grid.resize(m_rows, m_cols);
   prepareGUI();
   connectSlots();
 
-  m_worker.start();
+  m_genWorker.start();
+  m_simWorker.start();
 }
 
 MainWindow::~MainWindow() {
-  m_worker.quit();
-  m_worker.wait();
+  m_simWorker.quit();
+  m_genWorker.quit();
+  m_simWorker.wait();
+  m_genWorker.wait();
 
   delete m_gui;
   delete m_scene;
@@ -29,39 +33,54 @@ MainWindow::~MainWindow() {
 
 void MainWindow::connectSlots() {
 
+  // Cave generation
   connect(m_gui->generateCaveBtn, &QPushButton::clicked, this,
           &MainWindow::onNewCaveRequested);
 
   connect(this, &MainWindow::startCaveGeneration, &m_gen,
           &CaveGenerator::generateCave);
 
-  connect(&m_gen, &CaveGenerator::caveReady, this, &MainWindow::onCaveReady);
+  connect(&m_gen, &CaveGenerator::gridReady, this, &MainWindow::onGridReady);
 
-  connect(m_gui->initSimBtn, &QPushButton::clicked, this,
-          &MainWindow::onSimulationInitialized);
+  connect(m_gui->seedSB, &QSpinBox::valueChanged, &m_gen,
+          &CaveGenerator::setSeed);
 
+  connect(m_gui->thresholdSB, &QSpinBox::valueChanged, &m_gen,
+          &CaveGenerator::setThreshold);
+
+  connect(m_gui->rockRatioSB, &QSpinBox::valueChanged, &m_gen,
+          &CaveGenerator::setRockRatio);
+
+  connect(m_gui->stepsSB, &QSpinBox::valueChanged, &m_gen,
+          &CaveGenerator::setSteps);
+
+  // Population simulation
   connect(m_gui->startSimBtn, &QPushButton::clicked, this,
-          &MainWindow::onSimulationStarted);
+          &MainWindow::onSimStartRequested);
 
   connect(m_gui->stopSimBtn, &QPushButton::clicked, this,
-          &MainWindow::onSimulationStopped);
+          &MainWindow::onSimStopRequested);
 
-  connect(m_gui->seedSB, &QSpinBox::valueChanged, this,
-          &MainWindow::onSeedValueChanged);
+  connect(m_gui->initSimBtn, &QPushButton::clicked, this,
+          &MainWindow::onSimInitRequested);
 
-  connect(m_gui->thresholdSB, &QSpinBox::valueChanged, this,
-          &MainWindow::onThresholdValueChanged);
+  connect(this, &MainWindow::initializeSim, &m_sim,
+          &PopulationSimulator::initialize);
 
-  connect(m_gui->rockRatioSB, &QSpinBox::valueChanged, this,
-          &MainWindow::onRockRatioValueChanged);
+  connect(m_timer, &QTimer::timeout, this, &MainWindow::onTimeout);
 
-  connect(m_gui->stepsSB, &QSpinBox::valueChanged, this,
-          &MainWindow::onStepsValueChanged);
+  connect(this, &MainWindow::performSimStep, &m_sim,
+          &PopulationSimulator::step);
 
+  connect(&m_sim, &PopulationSimulator::popReady, this,
+          &MainWindow::onGridReady);
+
+  // Misc
   connect(m_scene, &CustomGraphicsScene::mouseReleased, this,
-          &MainWindow::onCanvasClicked);
+          &MainWindow::onCanvasClick);
 
-  connect(m_timer, &QTimer::timeout, this, &MainWindow::onSimulationStep);
+  connect(this, &MainWindow::spawnLightSource, &m_gen,
+          &CaveGenerator::spawnLightSource);
 }
 
 void MainWindow::prepareGUI() {
@@ -120,48 +139,23 @@ void MainWindow::onNewCaveRequested() {
   emit startCaveGeneration(m_rows, m_cols);
 }
 
-void MainWindow::onCaveReady(Grid grid) {
-  // TODO remove loading indicator
-  m_grid = grid;
-  populateScene();
-  m_scene->update();
-}
+void MainWindow::onSimInitRequested() { emit initializeSim(m_grid); }
 
-void MainWindow::onSimulationInitialized() {
-  m_sim.initialize();
-  m_grid = m_sim.getGrid();
-  populateScene();
-  m_scene->update();
-}
-
-void MainWindow::onSimulationStarted() {
+void MainWindow::onSimStartRequested() {
   m_timer->start(1000); // milliseconds
-};
-
-void MainWindow::onSimulationStopped() { m_timer->stop(); };
-
-void MainWindow::onSimulationStep() {
-  m_sim.step();
-  m_grid = m_sim.getGrid();
-  populateScene();
-  m_scene->update();
 }
 
-void MainWindow::onSeedValueChanged(int newValue) { m_gen.setSeed(newValue); }
+void MainWindow::onSimStopRequested() { m_timer->stop(); }
 
-void MainWindow::onThresholdValueChanged(int newValue) {
-  m_gen.setThreshold(newValue);
-}
+void MainWindow::onTimeout() { emit performSimStep(m_grid); }
 
-void MainWindow::onRockRatioValueChanged(int newValue) {
-  m_gen.setRockRatio(newValue);
-}
-
-void MainWindow::onStepsValueChanged(int newValue) { m_gen.setSteps(newValue); }
-
-void MainWindow::onCanvasClicked(QPointF coords) {
-  m_grid.setLightSource(round(coords.x() / m_cellSide),
+void MainWindow::onCanvasClick(QPointF coords) {
+  emit spawnLightSource(m_grid, round(coords.x() / m_cellSide),
                         round(coords.y() / m_cellSide));
+}
+
+void MainWindow::onGridReady(Grid grid) {
+  m_grid = grid;
   populateScene();
   m_scene->update();
 }
