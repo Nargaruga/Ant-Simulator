@@ -94,13 +94,8 @@ public slots:
    */
   void generateCave(int rows, int cols);
 
-  /*
-   *  Spawns a light source at column `x` and row `y` in `grid`
-   */
-  void spawnLightSource(Grid grid, int x, int y);
-
 signals:
-  void gridReady(Grid grid);
+  void gridReady(Grid<bool> grid);
 
 private:
   int m_seed;      // Seed for the initial configuration
@@ -114,23 +109,17 @@ private:
    *  `m_seed` and the ratio `m_rockRatio`, which decides the likeliness of a
    *  cell to be initialized as rock
    */
-  void initialize(Grid &grid);
+  void initialize(Grid<bool> &grid);
 
   /*
    *  Performs one step of the CA simulation on `grid`
    */
-  void step(Grid &grid);
+  void step(Grid<bool> &grid);
 
   /*
    *  Performs `m_steps` steps of the CA simulation on `m_grid`
    */
-  void simulate(Grid &grid);
-
-  /*
-   *  Highlights wall cells, that is rock cells which neighbour at least one
-   *  floor cell
-   */
-  void highlightWalls(Grid &grid);
+  void simulate(Grid<bool> &grid);
 };
 
 #endif

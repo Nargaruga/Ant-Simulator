@@ -1,7 +1,6 @@
 #include "main_window.h"
 #include "ui_main_window.h"
 #include <QGraphicsRectItem>
-#include <bits/stdc++.h>
 #include <iostream>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -12,7 +11,6 @@ MainWindow::MainWindow(QWidget *parent)
   m_gen.moveToThread(&m_genWorker);
   m_sim.moveToThread(&m_simWorker);
 
-  m_grid.resize(m_rows, m_cols);
   prepareGUI();
   connectSlots();
 
@@ -40,7 +38,10 @@ void MainWindow::connectSlots() {
   connect(this, &MainWindow::startCaveGeneration, &m_gen,
           &CaveGenerator::generateCave);
 
-  connect(&m_gen, &CaveGenerator::gridReady, this, &MainWindow::onGridReady);
+  connect(&m_gen, &CaveGenerator::gridReady, this, &MainWindow::onCaveReady);
+
+  connect(&m_gen, &CaveGenerator::gridReady, &m_sim,
+          &AntSimulator::setupEnvironment);
 
   connect(m_gui->seedSB, &QSpinBox::valueChanged, &m_gen,
           &CaveGenerator::setSeed);
@@ -64,23 +65,13 @@ void MainWindow::connectSlots() {
   connect(m_gui->initSimBtn, &QPushButton::clicked, this,
           &MainWindow::onSimInitRequested);
 
-  connect(this, &MainWindow::initializeSim, &m_sim,
-          &PopulationSimulator::initialize);
+  connect(this, &MainWindow::initializeSim, &m_sim, &AntSimulator::initialize);
 
   connect(m_timer, &QTimer::timeout, this, &MainWindow::onTimeout);
 
-  connect(this, &MainWindow::performSimStep, &m_sim,
-          &PopulationSimulator::step);
+  connect(this, &MainWindow::performSimStep, &m_sim, &AntSimulator::step);
 
-  connect(&m_sim, &PopulationSimulator::popReady, this,
-          &MainWindow::onGridReady);
-
-  // Misc
-  connect(m_scene, &CustomGraphicsScene::mouseReleased, this,
-          &MainWindow::onCanvasClick);
-
-  connect(this, &MainWindow::spawnLightSource, &m_gen,
-          &CaveGenerator::spawnLightSource);
+  connect(&m_sim, &AntSimulator::gridReady, this, &MainWindow::onSimReady);
 }
 
 void MainWindow::prepareGUI() {
@@ -101,10 +92,9 @@ void MainWindow::prepareGUI() {
                            m_gen.getStepsRange().second);
   m_gui->stepsSB->setValue(m_gen.getSteps());
 
-  // Setup and populate the scene
+  // Setup the scene
   m_scene = new CustomGraphicsScene();
   m_scene->setSceneRect(QRect(0, 0, m_cols * m_cellSide, m_rows * m_cellSide));
-  populateScene();
 
   // Setup the QtGraphicsView which will host the scene
   m_gui->graphicsView->setMinimumSize(
@@ -115,16 +105,57 @@ void MainWindow::prepareGUI() {
   m_gui->graphicsView->setScene(m_scene);
 }
 
-void MainWindow::populateScene() {
-  for (int x = 0; x < m_grid.getCols(); x++) {
-    for (int y = 0; y < m_grid.getRows(); y++) {
-      const Cell &cell = m_grid.getCell(x, y);
+void MainWindow::drawCave(Grid<bool> grid) {
+  for (int x = 0; x < grid.getCols(); x++) {
+    for (int y = 0; y < grid.getRows(); y++) {
+      Cell<bool> cell = grid.getCell(x, y);
 
-      // Draw the cell
+      // Set the shape of the cell
       QGraphicsRectItem *item = new QGraphicsRectItem(
-          QRect(cell.getX() * m_cellSide, cell.getY() * m_cellSide, m_cellSide,
-                m_cellSide));
-      item->setBrush(QBrush(cell.getColor()));
+          QRect(x * m_cellSide, y * m_cellSide, m_cellSide, m_cellSide));
+
+      // Choose the color
+      if (cell.getData()) {
+        item->setBrush(QBrush(rockColor));
+      } else {
+        item->setBrush(QBrush(floorColor));
+      }
+
+      if (!m_showOutlines)
+        item->setPen(Qt::NoPen);
+
+      m_scene->addItem(item);
+    }
+  }
+}
+
+void MainWindow::drawAnts(Grid<SimCellData> grid) {
+  for (int x = 0; x < grid.getCols(); x++) {
+    for (int y = 0; y < grid.getRows(); y++) {
+      Cell<SimCellData> cell = grid.getCell(x, y);
+
+      // Set the shape of the cell
+      QGraphicsRectItem *item = new QGraphicsRectItem(
+          QRect(x * m_cellSide, y * m_cellSide, m_cellSide, m_cellSide));
+
+      // Choose the color
+      switch (cell.getData().getType()) {
+      case SimCellData::Type::ANT: {
+        item->setBrush(QBrush(antColor));
+        break;
+      }
+      case SimCellData::Type::FLOOR: {
+        item->setBrush(QBrush(floorColor));
+        break;
+      }
+      case SimCellData::Type::FOOD: {
+        item->setBrush(QBrush(foodColor));
+        break;
+      }
+      case SimCellData::Type::ROCK: {
+        item->setBrush(QBrush(rockColor));
+      }
+      }
 
       if (!m_showOutlines)
         item->setPen(Qt::NoPen);
@@ -139,7 +170,7 @@ void MainWindow::onNewCaveRequested() {
   emit startCaveGeneration(m_rows, m_cols);
 }
 
-void MainWindow::onSimInitRequested() { emit initializeSim(m_grid); }
+void MainWindow::onSimInitRequested() { emit initializeSim(); }
 
 void MainWindow::onSimStartRequested() {
   m_timer->start(1000); // milliseconds
@@ -147,15 +178,14 @@ void MainWindow::onSimStartRequested() {
 
 void MainWindow::onSimStopRequested() { m_timer->stop(); }
 
-void MainWindow::onTimeout() { emit performSimStep(m_grid); }
+void MainWindow::onTimeout() { emit performSimStep(); }
 
-void MainWindow::onCanvasClick(QPointF coords) {
-  emit spawnLightSource(m_grid, round(coords.x() / m_cellSide),
-                        round(coords.y() / m_cellSide));
+void MainWindow::onCaveReady(Grid<bool> cave) {
+  drawCave(cave);
+  m_scene->update();
 }
 
-void MainWindow::onGridReady(Grid grid) {
-  m_grid = grid;
-  populateScene();
+void MainWindow::onSimReady(Grid<SimCellData> simGrid) {
+  drawAnts(simGrid);
   m_scene->update();
 }

@@ -1,9 +1,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "ant_sim.h"
 #include "cave_gen.h"
 #include "custom_graphics_scene.h"
-#include "population_sim.h"
 #include <QGraphicsScene>
 #include <QMainWindow>
 #include <QThread>
@@ -26,42 +26,39 @@ public:
 private slots:
   void onNewCaveRequested();
 
+  void onCaveReady(Grid<bool> cave);
+
   void onSimInitRequested();
 
   void onSimStartRequested();
 
   void onSimStopRequested();
 
+  void onSimReady(Grid<SimCellData> cave);
+
   void onTimeout();
-
-  void onCanvasClick(QPointF coords);
-
-  void onGridReady(Grid grid);
 
 signals:
   void startCaveGeneration(int rows, int cols);
 
-  void initializeSim(Grid grid);
+  void initializeSim();
 
-  void performSimStep(Grid grid);
-
-  void spawnLightSource(Grid grid, int x, int y);
+  void performSimStep();
 
 private:
   Ui::MainWindow *m_gui;        // Class responsible for the GUI
   CustomGraphicsScene *m_scene; // Scene depicted in the canvas
   CaveGenerator m_gen;          // Generator for the displayed caves
-  PopulationSimulator m_sim;    // Population behaviour simulator
+  AntSimulator m_sim;           // Population behaviour simulator
   QTimer *m_timer;              // Simulation timer
   bool m_showOutlines =
-      false;            // Should the grid cells have an outline? TODO checkbox
-  Grid m_grid;          // Grid to draw on canvas
-  std::mutex m_gridMtx; // Mutex for mutual exclusion on grid accesses
-  int m_cols = 128;     // Number of grid columns
-  int m_rows = 64;      // Number of grid rows
-  int m_cellSide = 5;   // Width of grid cells, in pixels
-  QThread m_genWorker;  // Cave generation thread
-  QThread m_simWorker;  // Population simulation thread
+      false; // Should the grid cells have an outline? TODO checkbox
+  Grid<SimCellData> grid;
+  int m_cols = 128;    // Number of grid columns
+  int m_rows = 64;     // Number of grid rows
+  int m_cellSide = 5;  // Width of grid cells, in pixels
+  QThread m_genWorker; // Cave generation thread
+  QThread m_simWorker; // Population simulation thread
 
   /*
    * Connect the GUI items' signals to the relative slots
@@ -76,6 +73,11 @@ private:
   /*
    * Draw the generator's grid on the canvas
    */
-  void populateScene();
+  void drawCave(Grid<bool> grid);
+
+  /*
+   * Draw the simulator's grid on the canvas
+   */
+  void drawAnts(Grid<SimCellData> grid);
 };
 #endif // MAINWINDOW_H

@@ -4,9 +4,11 @@
 #include <QColor>
 
 const QColor floorColor = QColor(96, 96, 96);
-const QColor innerRockColor = QColor(64, 64, 64);
-const QColor outerRockColor = QColor(32, 32, 32);
-const QColor organismColor = QColor(0, 204, 0);
+const QColor rockColor = QColor(64, 64, 64);
+const QColor antColor = QColor(21, 182, 43);
+const QColor foodColor = QColor(1831, 111, 51);
+const QColor homePheromoneColor = QColor(37, 244, 244);
+const QColor foodPheromoneColor = QColor();
 
 /*
  * Blends the colors `a` and `b` with ratio `r`

@@ -2,62 +2,93 @@
 #define GRID_H
 
 #include "cell.h"
+#include <memory>
 #include <vector>
 
+int manhattanDist(int x1, int y1, int x2, int y2);
+
 /*
- * A grid of square cells
+ * A grid of cells with contents of type T
  */
-class Grid {
+template <typename T> class Grid {
 
 public:
   /*
-   *  Creates a grid of `rows` rows, `cols` columns
-   *  containing square cells
+   *  Creates a grid with the specified number of rows and columns
    */
-  Grid(int rows = 0, int cols = 0);
+  Grid(int rows = 0, int cols = 0) : m_rows(rows), m_cols(cols) {
+    if (rows < 0 || cols < 0)
+      throw std::invalid_argument(
+          "The number of rows and columns cannot be negative.");
+
+    for (int y = 0; y < rows; y++) {
+      for (int x = 0; x < cols; x++) {
+        m_cells.push_back(Cell<T>(x, y));
+      }
+    }
+  }
 
   /*
-   *  Sets the state of the cell situated at column `x` and row `y` to `state`
+   *  Resizes the grid to be `rows` tall and `cols` wide.
+   *  All contents are discarded.
    */
-  void setCellState(int x, int y, Cell::State state);
+  void resize(int rows, int cols) {
+    if (rows < 0 || cols < 0)
+      throw std::invalid_argument(
+          "The number of rows and columns cannot be negative.");
+
+    m_rows = rows;
+    m_cols = cols;
+
+    std::vector<Cell<T>> newCells;
+
+    for (int y = 0; y < rows; y++) {
+      for (int x = 0; x < cols; x++) {
+        newCells.push_back(Cell<T>(x, y));
+      }
+    }
+
+    m_cells = newCells;
+  }
 
   /*
-   *  Sets the light level of the cell situated at column `x` and row `y` to
-   *  `light`
+   *  Computes the Manhattan distance between two points (x1, y1) and (x2, y2)
    */
-  void setCellLightLevel(int x, int y, float light);
+  int manhattanDist(int x1, int y1, int x2, int y2) const {
+    if (x1 < 0 || x1 >= m_cols || y1 < 0 || y1 >= m_rows || x2 < 0 ||
+        x2 >= m_cols || y2 < 0 || y2 > m_rows)
+      throw std::invalid_argument("Out of bounds coordinates.");
+
+    int dx = abs(x1 - x2);
+    int dy = abs(y1 - y2);
+    return dx + dy;
+  }
 
   /*
-   *  Resizes the grid to have `rows` rows and `cols` columns
+   *  Sets the cell at column `x` and row `y` to `val`
    */
-  void resize(int rows, int cols);
+  void setCell(int x, int y, T val) {
+    if (x < 0 || x >= m_cols || y < 0 || y >= m_rows)
+      throw std::invalid_argument("Out of bounds coordinates.");
 
-  /*
-   *  Spawns an organism at column `x` and row `y`
-   */
-  void spawnOrganism(int x, int y);
-
-  /*
-   *  Clears the cell at `x` and row `y`, turning it into a floor tile
-   */
-  void clearCell(int x, int y);
-
-  /*
-   *  Returns true if a line can be drawn from (x0, y0) to (x1, y1), false
-   * otherwise
-   */
-  bool isVisible(int x0, int y0, int x1, int y1) const;
+    m_cells[y * m_cols + x].setData(val);
+  }
 
   /*
    *  Returns true if the cell at column `x` and row `y` is on the grid's
    *  border, false otherwise
    */
-  bool isBorder(int x, int y) const;
+  bool isBorder(int x, int y) const {
+    if (x == 0 || x == m_cols - 1 || y == 0 || y == m_rows - 1)
+      return true;
+    else
+      return false;
+  }
 
   /*
-   *  Returns a copy of the i-th cell
+   *  Returns the i-th cell
    */
-  Cell getCell(int i) const {
+  Cell<T> getCell(int i) const {
     if (i < 0 || i >= m_cols * m_rows)
       throw std::invalid_argument("Out of bounds coordinates.");
 
@@ -65,9 +96,9 @@ public:
   }
 
   /*
-   *  Returns a copy of the cell at column `x` and row `y`
+   *  Returns the cell at column `x` and row `y`
    */
-  Cell getCell(int x, int y) const {
+  Cell<T> getCell(int x, int y) const {
     if (x < 0 || y < 0 || x >= m_cols || y >= m_rows)
       throw std::invalid_argument("Coordinates are out of bounds.");
 
@@ -79,14 +110,45 @@ public:
    *  at column `x` and row `y`. `radius` denotes the radius of the
    *  neighbourhood
    */
-  std::vector<Cell> getMooreNeighbourhood(int x, int y, int radius = 1) const;
+  std::vector<Cell<T>> getMooreNeighbourhood(int x, int y,
+                                             int radius = 1) const {
+    if (x < 0 || y < 0 || x >= m_cols || y >= m_rows)
+      throw std::invalid_argument("Out of bounds coordinates.");
+
+    std::vector<Cell<T>> neighbourhood;
+
+    for (int i = x - radius; i <= x + radius; i++) {
+      for (int j = y - radius; j <= y + radius; j++) {
+        if ((i != x || j != y) && i >= 0 && i < m_cols && j >= 0 && j < m_rows)
+          neighbourhood.push_back(getCell(i, j));
+      }
+    }
+
+    return neighbourhood;
+  }
 
   /*
    *  Returns a vector containing the Von Neumann neighbourhood of the cell
    *  found at column `x` and row `y`. `radius` denotes the radius of the
    *  neighbourhood
    */
-  std::vector<Cell> getNeumannNeighbourhood(int x, int y, int radius = 1) const;
+  std::vector<Cell<T>> getNeumannNeighbourhood(int x, int y,
+                                               int radius = 1) const {
+    if (x < 0 || y < 0 || x >= m_cols || y >= m_rows)
+      throw std::invalid_argument("Out of bounds coordinates.");
+
+    std::vector<Cell<T>> neighbourhood;
+
+    for (int i = x - radius; i <= x + radius; i++) {
+      for (int j = y - radius; j <= y + radius; j++) {
+        if ((i != x || j != y) && i >= 0 && i < m_cols && j >= 0 &&
+            j < m_rows && manhattanDist(x, y, i, j) <= radius)
+          neighbourhood.push_back(getCell(i, j));
+      }
+    }
+
+    return neighbourhood;
+  }
 
   /*
    *  Returns the size of the grid
@@ -104,9 +166,9 @@ public:
   int getRows() const { return m_rows; }
 
 private:
-  int m_rows;                // Number of rows
-  int m_cols;                // Number of columns
-  std::vector<Cell> m_cells; // Cells of the grid
+  int m_rows;                   // Number of rows
+  int m_cols;                   // Number of columns
+  std::vector<Cell<T>> m_cells; // Cells of the grid
 };
 
 #endif
