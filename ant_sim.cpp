@@ -55,8 +55,8 @@ void AntSimulator::step() {
         m_grid.getCardinalNeighbourhood(ant.getX(), ant.getY(),
                                         ant.getDirection());
 
-    // We don't consider occupied cells, the cell we just visited and, if the
-    // ant is carrying food, food cells
+    // We don't consider occupied cells and, if the ant is carrying food,
+    // food cells
     std::erase_if(neighbourhood, [&](Cell<SimCellData> cell) {
       return cell.getData().getType() == SimCellData::Type::ROCK ||
              cell.getData().getType() == SimCellData::Type::ANT ||
@@ -78,25 +78,22 @@ void AntSimulator::step() {
       // If the ant is carrying food, it will want to head home, otherwise it
       // will look for food
       if (ant.hasFood()) {
-        if (neighbour.getData().getType() == SimCellData::Type::NEST ||
-            neighbour.getData().getHomePheromone() >
-                destination.getData().getHomePheromone())
+        if (neighbour.getData().getType() == SimCellData::Type::NEST) {
+          // We found the nest, stop searching
+          destination = neighbour;
+          break;
+        } else if (neighbour.getData().getHomePheromone() >
+                   destination.getData().getHomePheromone())
           destination = neighbour;
       } else {
-        if (neighbour.getData().getType() == SimCellData::Type::FOOD ||
-            neighbour.getData().getFoodPheromone() >
-                destination.getData().getFoodPheromone())
+        if (neighbour.getData().getType() == SimCellData::Type::FOOD) {
+          // We found food, stop searching
+          destination = neighbour;
+          break;
+        } else if (neighbour.getData().getFoodPheromone() >
+                   destination.getData().getFoodPheromone())
           destination = neighbour;
       }
-    }
-
-    // Drop/pick up food
-    if (destination.getData().getType() == SimCellData::Type::FOOD) {
-      ant.pickUpFood();
-      ant.invert();
-    } else if (destination.getData().getType() == SimCellData::Type::NEST) {
-      ant.dropFood();
-      ant.invert();
     }
 
     // Restore the previous cell
@@ -105,23 +102,44 @@ void AntSimulator::step() {
       tmp.setType(SimCellData::Type::NEST);
     else {
       tmp.setType(SimCellData::Type::FLOOR);
-      // Leave pheromone
-      if (ant.hasFood()) {
-        tmp.incrementFoodPheromone();
-      } else {
-        tmp.incrementHomePheromone();
-      }
+      spreadPheromone(ant);
     }
     m_grid.setCell(ant.getX(), ant.getY(), tmp);
 
+    // Update the ant
+    ant.setCoords(destination.getX(), destination.getY());
+    if (destination.getData().getType() == SimCellData::Type::FOOD) {
+      ant.pickUpFood();
+      ant.invert();
+    } else if (destination.getData().getType() == SimCellData::Type::NEST) {
+      ant.dropFood();
+      ant.invert();
+    }
+
+    // Update the grid
     tmp = m_grid.getCell(destination.getX(), destination.getY()).getData();
     tmp.setType(SimCellData::Type::ANT);
     m_grid.setCell(destination.getX(), destination.getY(), tmp);
-
-    ant.setCoords(destination.getX(), destination.getY());
   }
 
   emit gridReady(m_grid);
+}
+
+void AntSimulator::spreadPheromone(Ant ant) {
+  std::vector<Cell<SimCellData>> neighbourhood =
+      m_grid.getNeumannNeighbourhood(ant.getX(), ant.getY(), 2);
+  neighbourhood.push_back(m_grid.getCell(ant.getX(), ant.getY()));
+
+  for (Cell<SimCellData> cell : neighbourhood) {
+    SimCellData data = cell.getData();
+    int dist =
+        m_grid.manhattanDist(cell.getX(), cell.getY(), ant.getX(), ant.getY());
+    if (ant.hasFood())
+      data.incrementFoodPheromone(dist);
+    else
+      data.incrementHomePheromone(dist);
+    m_grid.setCell(cell.getX(), cell.getY(), data);
+  }
 }
 
 void AntSimulator::onCellClicked(int x, int y) {

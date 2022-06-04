@@ -3,6 +3,7 @@
 
 #include "colors.h"
 #include <QColor>
+#include <cmath>
 #include <random>
 
 /*
@@ -29,8 +30,12 @@ public:
   /*
    *  TODO
    */
-  void incrementHomePheromone() {
-    m_homePheromone = std::min(m_homePheromone + 0.5f, 1.0f);
+  void incrementHomePheromone(int dist) {
+    if (dist < 0)
+      return;
+
+    m_homePheromone =
+        std::min(m_homePheromone + 0.3f / (float)std::pow(dist + 1, 2), 1.0f);
   }
 
   /*
@@ -41,8 +46,9 @@ public:
   /*
    *  TODO
    */
-  void incrementFoodPheromone() {
-    m_foodPheromone = std::min(m_foodPheromone + 0.5f, 1.0f);
+  void incrementFoodPheromone(int dist) {
+    m_foodPheromone = std::min(
+        m_foodPheromone + 0.3f / (float)std::pow(std::max(dist, 1), 2), 1.0f);
   }
 
   /*

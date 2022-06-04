@@ -29,6 +29,8 @@ public slots:
    */
   void step();
 
+  void spreadPheromone(Ant ant);
+
   void onCellClicked(int x, int y);
 
   void reset();
@@ -38,7 +40,7 @@ signals:
 
 private:
   Grid<SimCellData> m_grid;
-  int m_maxAnts = 20;
+  int m_maxAnts = 1;
   int m_nestX;
   int m_nestY;
   int m_seed; // Seed for the rng
