@@ -39,12 +39,20 @@ void AntSimulator::step() {
         Ant(m_nestX, m_nestY, static_cast<Direction>(m_rng() % 4)));
   }
 
+  // Update nest pheromone
+  std::vector<Cell<SimCellData>> nestArea =
+      m_grid.getMooreNeighbourhood(m_nestX, m_nestY);
+  for (Cell<SimCellData> cell : nestArea) {
+    SimCellData data = cell.getData();
+    //  data.incrementHomePheromone(0, 0);
+    m_grid.setCell(cell.getX(), cell.getY(), data);
+  }
+
   // Simulate pheromone evaporation
   for (int x = 0; x < m_grid.getCols(); x++) {
     for (int y = 0; y < m_grid.getRows(); y++) {
       SimCellData tmp = m_grid.getCell(x, y).getData();
-      tmp.decrementFoodPheromone();
-      tmp.decrementHomePheromone();
+      tmp.decrementPheromones();
       m_grid.setCell(x, y, tmp);
     }
   }
@@ -52,11 +60,10 @@ void AntSimulator::step() {
   // Move ants
   for (Ant &ant : m_ants) {
     std::vector<Cell<SimCellData>> neighbourhood =
-        m_grid.getCardinalNeighbourhood(ant.getX(), ant.getY(),
-                                        ant.getDirection());
+        m_grid.getDirectionalNeighbourhood(ant.getX(), ant.getY(),
+                                           ant.getDirection());
 
-    // We don't consider occupied cells and, if the ant is carrying food,
-    // food cells
+    // We don't consider occupied cells
     std::erase_if(neighbourhood, [&](Cell<SimCellData> cell) {
       return cell.getData().getType() == SimCellData::Type::ROCK ||
              cell.getData().getType() == SimCellData::Type::ANT ||
@@ -70,31 +77,7 @@ void AntSimulator::step() {
       continue;
     }
 
-    // Choose the most appealing cell to move to
-    Cell<SimCellData> destination =
-        neighbourhood[m_rng() % neighbourhood.size()];
-    for (Cell<SimCellData> neighbour : neighbourhood) {
-
-      // If the ant is carrying food, it will want to head home, otherwise it
-      // will look for food
-      if (ant.hasFood()) {
-        if (neighbour.getData().getType() == SimCellData::Type::NEST) {
-          // We found the nest, stop searching
-          destination = neighbour;
-          break;
-        } else if (neighbour.getData().getHomePheromone() >
-                   destination.getData().getHomePheromone())
-          destination = neighbour;
-      } else {
-        if (neighbour.getData().getType() == SimCellData::Type::FOOD) {
-          // We found food, stop searching
-          destination = neighbour;
-          break;
-        } else if (neighbour.getData().getFoodPheromone() >
-                   destination.getData().getFoodPheromone())
-          destination = neighbour;
-      }
-    }
+    Cell<SimCellData> destination = ant.pickDestination(neighbourhood, m_rng);
 
     // Restore the previous cell
     SimCellData tmp = m_grid.getCell(ant.getX(), ant.getY()).getData();
@@ -102,18 +85,26 @@ void AntSimulator::step() {
       tmp.setType(SimCellData::Type::NEST);
     else {
       tmp.setType(SimCellData::Type::FLOOR);
-      spreadPheromone(ant);
     }
     m_grid.setCell(ant.getX(), ant.getY(), tmp);
+    spreadPheromone(ant);
 
     // Update the ant
-    ant.setCoords(destination.getX(), destination.getY());
-    if (destination.getData().getType() == SimCellData::Type::FOOD) {
+    ant.move(destination.getX(), destination.getY(), m_rng);
+    if (!ant.hasFood() &&
+        destination.getData().getType() == SimCellData::Type::FOOD) {
       ant.pickUpFood();
       ant.invert();
+      ant.returnHome();
     } else if (destination.getData().getType() == SimCellData::Type::NEST) {
-      ant.dropFood();
+      if (ant.hasFood()) {
+        m_deliveredFood++;
+        emit updateFoodCount(m_deliveredFood, m_totalFood);
+        ant.dropFood();
+      }
+
       ant.invert();
+      ant.seekFood();
     }
 
     // Update the grid
@@ -132,12 +123,12 @@ void AntSimulator::spreadPheromone(Ant ant) {
 
   for (Cell<SimCellData> cell : neighbourhood) {
     SimCellData data = cell.getData();
-    int dist =
+    int distFromSource =
         m_grid.manhattanDist(cell.getX(), cell.getY(), ant.getX(), ant.getY());
-    if (ant.hasFood())
-      data.incrementFoodPheromone(dist);
-    else
-      data.incrementHomePheromone(dist);
+    if (ant.getMode() == Ant::RETURN && ant.hasFood())
+      data.incrementFoodPheromone(distFromSource, ant.getTraveledDistance());
+    else if (ant.getMode() == Ant::SEEK)
+      data.incrementHomePheromone(distFromSource, ant.getTraveledDistance());
     m_grid.setCell(cell.getX(), cell.getY(), data);
   }
 }
@@ -155,6 +146,9 @@ void AntSimulator::onCellClicked(int x, int y) {
     if (data.getType() == SimCellData::FLOOR) {
       data.setType(SimCellData::Type::FOOD);
       m_grid.setCell(cell.getX(), cell.getY(), data);
+
+      m_totalFood++;
+      emit updateFoodCount(m_deliveredFood, m_totalFood);
     }
   }
 

@@ -12,6 +12,10 @@ class AntSimulator : public QObject {
 public:
   AntSimulator(int seed = 0);
 
+  int getTotalFood() const { return m_totalFood; }
+
+  int getDeliveredFood() const { return m_deliveredFood; }
+
 public slots:
 
   /*
@@ -38,9 +42,13 @@ public slots:
 signals:
   void gridReady(Grid<SimCellData> grid);
 
+  void updateFoodCount(int delivered, int total);
+
 private:
   Grid<SimCellData> m_grid;
-  int m_maxAnts = 1;
+  int m_maxAnts = 30;
+  int m_deliveredFood = 0;
+  int m_totalFood = 0;
   int m_nestX;
   int m_nestY;
   int m_seed; // Seed for the rng

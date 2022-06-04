@@ -75,6 +75,9 @@ void MainWindow::connectSlots() {
 
   connect(&m_gen, &CaveGenerator::gridReady, &m_sim, &AntSimulator::reset);
 
+  connect(&m_sim, &AntSimulator::updateFoodCount, this,
+          &MainWindow::onFoodUpdated);
+
   // Canvas click
   connect(m_scene, &CustomGraphicsScene::mouseReleased, this,
           &MainWindow::onCanvasClick);
@@ -150,6 +153,8 @@ void MainWindow::drawAnts(Grid<SimCellData> grid) {
       switch (cell.getData().getType()) {
       case SimCellData::Type::ANT: {
         item->setBrush(QBrush(antColor));
+        if (cell.getData().DEBUG_HAS_FOOD)
+          item->setBrush(QBrush(DEBUG_ANT_FOOD_COLOR));
         break;
       }
       case SimCellData::Type::FLOOR: {
@@ -215,4 +220,9 @@ void MainWindow::onCanvasClick(QPointF coords) {
   int y = floor(coords.y() / m_cellSide);
 
   emit cellClicked(x, y);
+}
+
+void MainWindow::onFoodUpdated(int delivered, int total) {
+  m_gui->foodCountLbl->setText(
+      QString("Food delivered: %1 out of %2").arg(delivered).arg(total));
 }

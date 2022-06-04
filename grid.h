@@ -154,7 +154,7 @@ public:
     return neighbourhood;
   }
 
-  std::vector<Cell<T>> getCardinalNeighbourhood(int x, int y, Direction d) {
+  std::vector<Cell<T>> getDirectionalNeighbourhood(int x, int y, Direction d) {
     if (!areValid(x, y))
       throw std::invalid_argument("Out of bounds coordinates.");
 
@@ -164,15 +164,16 @@ public:
     case NORTH: {
       int nY = y - 1;
       for (int nX = x - 1; nX <= x + 1; nX++) {
-        if (areValid(nX, nY))
+        if (areValid(nX, nY) && (nX != x || nY != y))
           neighbourhood.push_back(m_cells[nY * m_cols + nX]);
       }
+
       break;
     }
     case SOUTH: {
       int nY = y + 1;
       for (int nX = x - 1; nX <= x + 1; nX++) {
-        if (areValid(nX, nY))
+        if (areValid(nX, nY) && (nX != x || nY != y))
           neighbourhood.push_back(m_cells[nY * m_cols + nX]);
       }
       break;
@@ -180,17 +181,19 @@ public:
     case EAST: {
       int nX = x + 1;
       for (int nY = y - 1; nY <= y + 1; nY++) {
-        if (areValid(nX, nY))
+        if (areValid(nX, nY) && (nX != x || nY != y))
           neighbourhood.push_back(m_cells[nY * m_cols + nX]);
       }
+
       break;
     }
     case WEST: {
       int nX = x - 1;
       for (int nY = y - 1; nY <= y + 1; nY++) {
-        if (areValid(nX, nY))
+        if (areValid(nX, nY) && (nX != x || nY != y))
           neighbourhood.push_back(m_cells[nY * m_cols + nX]);
       }
+
       break;
     }
     }

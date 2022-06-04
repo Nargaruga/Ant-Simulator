@@ -40,6 +40,8 @@ private slots:
 
   void onCanvasClick(QPointF coords);
 
+  void onFoodUpdated(int delivered, int total);
+
 signals:
   void startCaveGeneration(int rows, int cols);
 

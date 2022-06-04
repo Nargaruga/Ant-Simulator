@@ -8,6 +8,7 @@ const QColor rockColor = QColor(64, 64, 64);
 const QColor nestColor = QColor(50, 50, 200);
 const QColor antColor = QColor(0, 0, 0);
 const QColor foodColor = QColor(183, 111, 51);
+const QColor DEBUG_ANT_FOOD_COLOR = QColor(240, 50, 200);
 const QColor homePheromoneColor = QColor(37, 244, 244);
 const QColor foodPheromoneColor = QColor(230, 180, 70);
 

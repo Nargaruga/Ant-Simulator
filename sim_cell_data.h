@@ -12,6 +12,8 @@
 class SimCellData {
 
 public:
+  bool DEBUG_HAS_FOOD = false;
+
   /*
    *  Possible types of the cell
    */
@@ -30,31 +32,36 @@ public:
   /*
    *  TODO
    */
-  void incrementHomePheromone(int dist) {
-    if (dist < 0)
+  void incrementHomePheromone(float sourceDist, float traveledDistance) {
+    if (sourceDist < 0 || traveledDistance < 0)
       return;
 
     m_homePheromone =
-        std::min(m_homePheromone + 0.3f / (float)std::pow(dist + 1, 2), 1.0f);
+        std::min(m_homePheromone + 1.0f / ((sourceDist + 1.0f) *
+                                           (0.5f * traveledDistance + 1.0f)),
+                 1.0f);
   }
 
   /*
    *  TODO
    */
-  void decrementHomePheromone() { m_homePheromone *= 0.99f; }
+  void incrementFoodPheromone(float sourceDist, float traveledDistance) {
+    if (sourceDist < 0 || traveledDistance < 0)
+      return;
 
-  /*
-   *  TODO
-   */
-  void incrementFoodPheromone(int dist) {
-    m_foodPheromone = std::min(
-        m_foodPheromone + 0.3f / (float)std::pow(std::max(dist, 1), 2), 1.0f);
+    m_foodPheromone =
+        std::min(m_foodPheromone + 1.0f / ((sourceDist + 1.0f) *
+                                           (0.5f * traveledDistance + 1.0f)),
+                 1.0f);
   }
 
   /*
    *  TODO
    */
-  void decrementFoodPheromone() { m_foodPheromone *= 0.99f; }
+  void decrementPheromones() {
+    m_homePheromone = std::max(m_homePheromone - 0.001f, 0.0f);
+    m_foodPheromone = std::max(m_foodPheromone - 0.001f, 0.0f);
+  }
 
   void clearPheromones() {
     m_homePheromone = 0.0f;
@@ -77,7 +84,7 @@ public:
   float getFoodPheromone() const { return m_foodPheromone; }
 
 private:
-  Type m_type = Type::FLOOR;
+  Type m_type;
   float m_homePheromone = 0.0f;
   float m_foodPheromone = 0.0f;
 };

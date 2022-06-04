@@ -18,8 +18,8 @@ public:
    *    (0 <= threshold <= 8)
    *  - steps: number of iterations (0 <= steps)
    */
-  CaveGenerator(int seed = 0, int rockRatio = 50, int threshold = 5,
-                int steps = 4);
+  CaveGenerator(int seed = 0, int rockRatio = 60, int threshold = 5,
+                int steps = 8);
 
   /*
    *  Returns the seed parameter
