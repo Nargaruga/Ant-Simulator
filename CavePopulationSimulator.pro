@@ -22,6 +22,7 @@ HEADERS += \
     cell.h \
     colors.h \
     custom_graphics_scene.h \
+    direction.h \
     grid.h \
     main_window.h \
     sim_cell_data.h

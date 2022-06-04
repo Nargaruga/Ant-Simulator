@@ -14,7 +14,7 @@ public:
   /*
    *  Possible types of the cell
    */
-  enum Type { FLOOR, ROCK, ANT, FOOD };
+  enum Type { FLOOR, ROCK, ANT, FOOD, NEST };
 
   /*
    *  Constructs a data object with the specified type
@@ -29,20 +29,30 @@ public:
   /*
    *  TODO
    */
-  void startHomePheromone() { m_homePheromone = 1.0; }
-
-  /*
-   *  TODO
-   */
   void incrementHomePheromone() {
-    m_homePheromone = std::min(m_homePheromone + 0.1, 1.0);
+    m_homePheromone = std::min(m_homePheromone + 0.5f, 1.0f);
   }
 
   /*
    *  TODO
    */
-  void decrementHomePheromone() {
-    m_homePheromone = std::max(m_homePheromone - 0.1, 0.0);
+  void decrementHomePheromone() { m_homePheromone *= 0.99f; }
+
+  /*
+   *  TODO
+   */
+  void incrementFoodPheromone() {
+    m_foodPheromone = std::min(m_foodPheromone + 0.5f, 1.0f);
+  }
+
+  /*
+   *  TODO
+   */
+  void decrementFoodPheromone() { m_foodPheromone *= 0.99f; }
+
+  void clearPheromones() {
+    m_homePheromone = 0.0f;
+    m_foodPheromone = 0.0f;
   }
 
   /*
@@ -62,8 +72,8 @@ public:
 
 private:
   Type m_type = Type::FLOOR;
-  float m_homePheromone = 0.0;
-  float m_foodPheromone = 0.0;
+  float m_homePheromone = 0.0f;
+  float m_foodPheromone = 0.0f;
 };
 
 #endif

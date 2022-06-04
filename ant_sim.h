@@ -29,11 +29,18 @@ public slots:
    */
   void step();
 
+  void onCellClicked(int x, int y);
+
+  void reset();
+
 signals:
   void gridReady(Grid<SimCellData> grid);
 
 private:
   Grid<SimCellData> m_grid;
+  int m_maxAnts = 20;
+  int m_nestX;
+  int m_nestY;
   int m_seed; // Seed for the rng
   std::default_random_engine m_rng;
   std::vector<Ant> m_ants;

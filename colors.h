@@ -5,10 +5,11 @@
 
 const QColor floorColor = QColor(96, 96, 96);
 const QColor rockColor = QColor(64, 64, 64);
-const QColor antColor = QColor(21, 182, 43);
-const QColor foodColor = QColor(1831, 111, 51);
+const QColor nestColor = QColor(50, 50, 200);
+const QColor antColor = QColor(0, 0, 0);
+const QColor foodColor = QColor(183, 111, 51);
 const QColor homePheromoneColor = QColor(37, 244, 244);
-const QColor foodPheromoneColor = QColor();
+const QColor foodPheromoneColor = QColor(230, 180, 70);
 
 /*
  * Blends the colors `a` and `b` with ratio `r`

@@ -38,12 +38,16 @@ private slots:
 
   void onTimeout();
 
+  void onCanvasClick(QPointF coords);
+
 signals:
   void startCaveGeneration(int rows, int cols);
 
   void initializeSim();
 
   void performSimStep();
+
+  void cellClicked(int x, int y);
 
 private:
   Ui::MainWindow *m_gui;        // Class responsible for the GUI
@@ -56,7 +60,7 @@ private:
   Grid<SimCellData> grid;
   int m_cols = 128;    // Number of grid columns
   int m_rows = 64;     // Number of grid rows
-  int m_cellSide = 5;  // Width of grid cells, in pixels
+  int m_cellSide = 10; // Width of grid cells, in pixels
   QThread m_genWorker; // Cave generation thread
   QThread m_simWorker; // Population simulation thread
 

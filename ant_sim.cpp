@@ -17,40 +17,58 @@ void AntSimulator::setupEnvironment(Grid<bool> cave) {
 }
 
 void AntSimulator::initialize() {
-  int x = -1, y = -1;
+  reset();
 
-  // TODO: limit iterations or change initialization method
   do {
-    x = m_rng() % m_grid.getCols();
-    y = m_rng() % m_grid.getRows();
-  } while (m_grid.getCell(x, y).getData().getType() == SimCellData::Type::ROCK);
+    m_nestX = m_rng() % m_grid.getCols();
+    m_nestY = m_rng() % m_grid.getRows();
+  } while (m_grid.getCell(m_nestX, m_nestY).getData().getType() ==
+           SimCellData::Type::ROCK);
 
-  if (x > 0 && y > 0)
-    m_ants.push_back(Ant(x, y));
-
-  SimCellData tmp = m_grid.getCell(x, y).getData();
-  tmp.setType(SimCellData::Type::ANT);
-  m_grid.setCell(x, y, tmp);
+  SimCellData tmp = m_grid.getCell(m_nestX, m_nestY).getData();
+  tmp.setType(SimCellData::Type::NEST);
+  m_grid.setCell(m_nestX, m_nestY, tmp);
 
   emit gridReady(m_grid);
 }
 
 void AntSimulator::step() {
+  // Spawn an ant if necessary
+  if (m_ants.size() < m_maxAnts) {
+    m_ants.push_back(
+        Ant(m_nestX, m_nestY, static_cast<Direction>(m_rng() % 4)));
+  }
 
-  // TODO: ants are always processed in the same order, maybe this should change
+  // Simulate pheromone evaporation
+  for (int x = 0; x < m_grid.getCols(); x++) {
+    for (int y = 0; y < m_grid.getRows(); y++) {
+      SimCellData tmp = m_grid.getCell(x, y).getData();
+      tmp.decrementFoodPheromone();
+      tmp.decrementHomePheromone();
+      m_grid.setCell(x, y, tmp);
+    }
+  }
+
+  // Move ants
   for (Ant &ant : m_ants) {
     std::vector<Cell<SimCellData>> neighbourhood =
-        m_grid.getNeumannNeighbourhood(ant.getX(), ant.getY());
+        m_grid.getCardinalNeighbourhood(ant.getX(), ant.getY(),
+                                        ant.getDirection());
 
-    // We don't consider occupied cells
+    // We don't consider occupied cells, the cell we just visited and, if the
+    // ant is carrying food, food cells
     std::erase_if(neighbourhood, [&](Cell<SimCellData> cell) {
       return cell.getData().getType() == SimCellData::Type::ROCK ||
-             cell.getData().getType() == SimCellData::Type::ANT;
+             cell.getData().getType() == SimCellData::Type::ANT ||
+             (ant.hasFood() &&
+              cell.getData().getType() == SimCellData::Type::FOOD);
     });
 
     // No suitable neighbouring cells to move to
-    if (neighbourhood.empty())
+    if (neighbourhood.empty()) {
+      ant.invert();
       continue;
+    }
 
     // Choose the most appealing cell to move to
     Cell<SimCellData> destination =
@@ -60,9 +78,9 @@ void AntSimulator::step() {
       // If the ant is carrying food, it will want to head home, otherwise it
       // will look for food
       if (ant.hasFood()) {
-        // TODO: should check if neighbour is nest
-        if (neighbour.getData().getHomePheromone() >
-            destination.getData().getHomePheromone())
+        if (neighbour.getData().getType() == SimCellData::Type::NEST ||
+            neighbour.getData().getHomePheromone() >
+                destination.getData().getHomePheromone())
           destination = neighbour;
       } else {
         if (neighbour.getData().getType() == SimCellData::Type::FOOD ||
@@ -72,12 +90,28 @@ void AntSimulator::step() {
       }
     }
 
-    if (destination.getData().getType() == SimCellData::Type::FOOD)
+    // Drop/pick up food
+    if (destination.getData().getType() == SimCellData::Type::FOOD) {
       ant.pickUpFood();
+      ant.invert();
+    } else if (destination.getData().getType() == SimCellData::Type::NEST) {
+      ant.dropFood();
+      ant.invert();
+    }
 
-    // TODO should devise a better way to change a cell's type...
+    // Restore the previous cell
     SimCellData tmp = m_grid.getCell(ant.getX(), ant.getY()).getData();
-    tmp.setType(SimCellData::Type::FLOOR);
+    if (ant.getX() == m_nestX && ant.getY() == m_nestY)
+      tmp.setType(SimCellData::Type::NEST);
+    else {
+      tmp.setType(SimCellData::Type::FLOOR);
+      // Leave pheromone
+      if (ant.hasFood()) {
+        tmp.incrementFoodPheromone();
+      } else {
+        tmp.incrementHomePheromone();
+      }
+    }
     m_grid.setCell(ant.getX(), ant.getY(), tmp);
 
     tmp = m_grid.getCell(destination.getX(), destination.getY()).getData();
@@ -88,4 +122,43 @@ void AntSimulator::step() {
   }
 
   emit gridReady(m_grid);
+}
+
+void AntSimulator::onCellClicked(int x, int y) {
+  if (x < 0 || x >= m_grid.getCols() || y < 0 || y >= m_grid.getRows())
+    return;
+
+  std::vector<Cell<SimCellData>> neighbourhood =
+      m_grid.getNeumannNeighbourhood(x, y, 2);
+  neighbourhood.push_back(m_grid.getCell(x, y));
+
+  for (Cell<SimCellData> cell : neighbourhood) {
+    SimCellData data = cell.getData();
+    if (data.getType() == SimCellData::FLOOR) {
+      data.setType(SimCellData::Type::FOOD);
+      m_grid.setCell(cell.getX(), cell.getY(), data);
+    }
+  }
+
+  emit gridReady(m_grid);
+}
+
+void AntSimulator::reset() {
+  m_nestX = -1;
+  m_nestY = -1;
+  m_ants.clear();
+
+  // Simulate pheromone evaporation
+  for (int x = 0; x < m_grid.getCols(); x++) {
+    for (int y = 0; y < m_grid.getRows(); y++) {
+      SimCellData tmp = m_grid.getCell(x, y).getData();
+      if (tmp.getType() == SimCellData::Type::ANT ||
+          tmp.getType() == SimCellData::Type::NEST ||
+          tmp.getType() == SimCellData::Type::FOOD)
+        tmp.setType(SimCellData::Type::FLOOR);
+
+      tmp.clearPheromones();
+      m_grid.setCell(x, y, tmp);
+    }
+  }
 }

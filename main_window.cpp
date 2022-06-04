@@ -72,6 +72,14 @@ void MainWindow::connectSlots() {
   connect(this, &MainWindow::performSimStep, &m_sim, &AntSimulator::step);
 
   connect(&m_sim, &AntSimulator::gridReady, this, &MainWindow::onSimReady);
+
+  connect(&m_gen, &CaveGenerator::gridReady, &m_sim, &AntSimulator::reset);
+
+  // Canvas click
+  connect(m_scene, &CustomGraphicsScene::mouseReleased, this,
+          &MainWindow::onCanvasClick);
+
+  connect(this, &MainWindow::cellClicked, &m_sim, &AntSimulator::onCellClicked);
 }
 
 void MainWindow::prepareGUI() {
@@ -145,7 +153,13 @@ void MainWindow::drawAnts(Grid<SimCellData> grid) {
         break;
       }
       case SimCellData::Type::FLOOR: {
-        item->setBrush(QBrush(floorColor));
+        float homePh = cell.getData().getHomePheromone();
+        float foodPh = cell.getData().getFoodPheromone();
+        QColor pheromoneColor = blend(homePheromoneColor, foodPheromoneColor,
+                                      0.5f + 0.5f * foodPh - 0.5f * homePh);
+
+        item->setBrush(QBrush(
+            blend(floorColor, pheromoneColor, (foodPh + homePh) / 2.0f)));
         break;
       }
       case SimCellData::Type::FOOD: {
@@ -154,6 +168,10 @@ void MainWindow::drawAnts(Grid<SimCellData> grid) {
       }
       case SimCellData::Type::ROCK: {
         item->setBrush(QBrush(rockColor));
+        break;
+      }
+      case SimCellData::Type::NEST: {
+        item->setBrush(QBrush(nestColor));
       }
       }
 
@@ -166,14 +184,13 @@ void MainWindow::drawAnts(Grid<SimCellData> grid) {
 }
 
 void MainWindow::onNewCaveRequested() {
-  // TODO add loading indicator
   emit startCaveGeneration(m_rows, m_cols);
 }
 
 void MainWindow::onSimInitRequested() { emit initializeSim(); }
 
 void MainWindow::onSimStartRequested() {
-  m_timer->start(1000); // milliseconds
+  m_timer->start(100); // milliseconds
 }
 
 void MainWindow::onSimStopRequested() { m_timer->stop(); }
@@ -181,11 +198,21 @@ void MainWindow::onSimStopRequested() { m_timer->stop(); }
 void MainWindow::onTimeout() { emit performSimStep(); }
 
 void MainWindow::onCaveReady(Grid<bool> cave) {
+  m_timer->stop();
+  m_scene->clear();
   drawCave(cave);
   m_scene->update();
 }
 
 void MainWindow::onSimReady(Grid<SimCellData> simGrid) {
+  m_scene->clear();
   drawAnts(simGrid);
   m_scene->update();
+}
+
+void MainWindow::onCanvasClick(QPointF coords) {
+  int x = floor(coords.x() / m_cellSide);
+  int y = floor(coords.y() / m_cellSide);
+
+  emit cellClicked(x, y);
 }

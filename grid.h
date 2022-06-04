@@ -2,6 +2,7 @@
 #define GRID_H
 
 #include "cell.h"
+#include "direction.h"
 #include <memory>
 #include <vector>
 
@@ -55,8 +56,7 @@ public:
    *  Computes the Manhattan distance between two points (x1, y1) and (x2, y2)
    */
   int manhattanDist(int x1, int y1, int x2, int y2) const {
-    if (x1 < 0 || x1 >= m_cols || y1 < 0 || y1 >= m_rows || x2 < 0 ||
-        x2 >= m_cols || y2 < 0 || y2 > m_rows)
+    if (!areValid(x1, y1) || !areValid(x2, y2))
       throw std::invalid_argument("Out of bounds coordinates.");
 
     int dx = abs(x1 - x2);
@@ -68,7 +68,7 @@ public:
    *  Sets the cell at column `x` and row `y` to `val`
    */
   void setCell(int x, int y, T val) {
-    if (x < 0 || x >= m_cols || y < 0 || y >= m_rows)
+    if (!areValid(x, y))
       throw std::invalid_argument("Out of bounds coordinates.");
 
     m_cells[y * m_cols + x].setData(val);
@@ -99,10 +99,14 @@ public:
    *  Returns the cell at column `x` and row `y`
    */
   Cell<T> getCell(int x, int y) const {
-    if (x < 0 || y < 0 || x >= m_cols || y >= m_rows)
-      throw std::invalid_argument("Coordinates are out of bounds.");
+    if (!areValid(x, y))
+      throw std::invalid_argument("Out of bounds coordinates.");
 
     return m_cells[y * m_cols + x];
+  }
+
+  bool areValid(int x, int y) const {
+    return x >= 0 && x < m_cols && y >= 0 && y < m_rows;
   }
 
   /*
@@ -112,7 +116,7 @@ public:
    */
   std::vector<Cell<T>> getMooreNeighbourhood(int x, int y,
                                              int radius = 1) const {
-    if (x < 0 || y < 0 || x >= m_cols || y >= m_rows)
+    if (!areValid(x, y))
       throw std::invalid_argument("Out of bounds coordinates.");
 
     std::vector<Cell<T>> neighbourhood;
@@ -134,7 +138,7 @@ public:
    */
   std::vector<Cell<T>> getNeumannNeighbourhood(int x, int y,
                                                int radius = 1) const {
-    if (x < 0 || y < 0 || x >= m_cols || y >= m_rows)
+    if (!areValid(x, y))
       throw std::invalid_argument("Out of bounds coordinates.");
 
     std::vector<Cell<T>> neighbourhood;
@@ -145,6 +149,50 @@ public:
             j < m_rows && manhattanDist(x, y, i, j) <= radius)
           neighbourhood.push_back(getCell(i, j));
       }
+    }
+
+    return neighbourhood;
+  }
+
+  std::vector<Cell<T>> getCardinalNeighbourhood(int x, int y, Direction d) {
+    if (!areValid(x, y))
+      throw std::invalid_argument("Out of bounds coordinates.");
+
+    std::vector<Cell<T>> neighbourhood;
+
+    switch (d) {
+    case NORTH: {
+      int nY = y - 1;
+      for (int nX = x - 1; nX <= x + 1; nX++) {
+        if (areValid(nX, nY))
+          neighbourhood.push_back(m_cells[nY * m_cols + nX]);
+      }
+      break;
+    }
+    case SOUTH: {
+      int nY = y + 1;
+      for (int nX = x - 1; nX <= x + 1; nX++) {
+        if (areValid(nX, nY))
+          neighbourhood.push_back(m_cells[nY * m_cols + nX]);
+      }
+      break;
+    }
+    case EAST: {
+      int nX = x + 1;
+      for (int nY = y - 1; nY <= y + 1; nY++) {
+        if (areValid(nX, nY))
+          neighbourhood.push_back(m_cells[nY * m_cols + nX]);
+      }
+      break;
+    }
+    case WEST: {
+      int nX = x - 1;
+      for (int nY = y - 1; nY <= y + 1; nY++) {
+        if (areValid(nX, nY))
+          neighbourhood.push_back(m_cells[nY * m_cols + nX]);
+      }
+      break;
+    }
     }
 
     return neighbourhood;
