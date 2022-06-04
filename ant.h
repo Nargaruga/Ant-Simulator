@@ -2,14 +2,13 @@
 #define ANT_H
 
 #include "cell.h"
-#include "direction.h"
 #include "sim_cell_data.h"
 
 class Ant {
 public:
   enum Mode { SEEK, RETURN };
 
-  Ant(int x, int y, Direction d = Direction::NORTH) : m_d(d), m_x(x), m_y(y){};
+  Ant(int x, int y, std::pair<int, int> d) : m_d(d), m_x(x), m_y(y){};
 
   int getX() const { return m_x; }
 
@@ -17,28 +16,13 @@ public:
 
   void move(int x, int y, std::default_random_engine &rng);
 
-  Direction getDirection() const { return m_d; }
+  std::pair<int, int> getDirection() const { return m_d; }
 
-  void setDirection(Direction d) { m_d = d; }
+  void setDirection(std::pair<int, int> d) { m_d = d; }
 
   void invert() {
-    switch (m_d) {
-    case NORTH: {
-      m_d = SOUTH;
-      break;
-    }
-    case SOUTH: {
-      m_d = NORTH;
-      break;
-    }
-    case EAST: {
-      m_d = WEST;
-      break;
-    }
-    case WEST: {
-      m_d = EAST;
-    }
-    }
+    m_d.first *= -1;
+    m_d.second *= -1;
   }
 
   void pickUpFood() { m_hasFood = true; }
@@ -66,7 +50,7 @@ public:
   int getTraveledDistance() const { return m_traveledDistance; }
 
 private:
-  Direction m_d;
+  std::pair<int, int> m_d;
   int m_x;
   int m_y;
   bool m_hasFood = false;

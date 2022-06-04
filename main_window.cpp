@@ -153,8 +153,6 @@ void MainWindow::drawAnts(Grid<SimCellData> grid) {
       switch (cell.getData().getType()) {
       case SimCellData::Type::ANT: {
         item->setBrush(QBrush(antColor));
-        if (cell.getData().DEBUG_HAS_FOOD)
-          item->setBrush(QBrush(DEBUG_ANT_FOOD_COLOR));
         break;
       }
       case SimCellData::Type::FLOOR: {

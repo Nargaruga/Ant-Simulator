@@ -1,19 +1,10 @@
 #include "ant.h"
 
 void Ant::move(int x, int y, std::default_random_engine &rng) {
-  if (rng() % 100 > 80) {
-    if (m_d == Direction::NORTH || m_d == Direction::SOUTH) {
-      if (x == m_x + 1)
-        m_d = Direction::EAST;
-      else if (x == m_x - 1)
-        m_d = Direction::WEST;
-    } else if (m_d == Direction::EAST || m_d == Direction::WEST) {
-      if (y == m_y + 1)
-        m_d = Direction::SOUTH;
-      else if (y == m_y - 1)
-        m_d = Direction::NORTH;
-    }
-  }
+  int dX = x - m_x;
+  int dY = y - m_y;
+
+  m_d = std::pair<int, int>(dX, dY);
 
   m_traveledDistance++;
   if (m_mode == SEEK) {

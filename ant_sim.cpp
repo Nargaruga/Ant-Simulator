@@ -36,15 +36,16 @@ void AntSimulator::step() {
   // Spawn an ant if necessary
   if (m_ants.size() < m_maxAnts) {
     m_ants.push_back(
-        Ant(m_nestX, m_nestY, static_cast<Direction>(m_rng() % 4)));
+        Ant(m_nestX, m_nestY,
+            std::pair<int, int>(m_rng() % 3 - 1, m_rng() % 3 - 1)));
   }
 
   // Update nest pheromone
   std::vector<Cell<SimCellData>> nestArea =
-      m_grid.getMooreNeighbourhood(m_nestX, m_nestY);
+      m_grid.getNeumannNeighbourhood(m_nestX, m_nestY, 2);
   for (Cell<SimCellData> cell : nestArea) {
     SimCellData data = cell.getData();
-    //  data.incrementHomePheromone(0, 0);
+    data.incrementHomePheromone(0, 0);
     m_grid.setCell(cell.getX(), cell.getY(), data);
   }
 
@@ -118,7 +119,7 @@ void AntSimulator::step() {
 
 void AntSimulator::spreadPheromone(Ant ant) {
   std::vector<Cell<SimCellData>> neighbourhood =
-      m_grid.getNeumannNeighbourhood(ant.getX(), ant.getY(), 2);
+      m_grid.getNeumannNeighbourhood(ant.getX(), ant.getY(), 3);
   neighbourhood.push_back(m_grid.getCell(ant.getX(), ant.getY()));
 
   for (Cell<SimCellData> cell : neighbourhood) {

@@ -46,7 +46,7 @@ signals:
 
 private:
   Grid<SimCellData> m_grid;
-  int m_maxAnts = 30;
+  int m_maxAnts = 50;
   int m_deliveredFood = 0;
   int m_totalFood = 0;
   int m_nestX;

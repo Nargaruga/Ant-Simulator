@@ -12,8 +12,6 @@
 class SimCellData {
 
 public:
-  bool DEBUG_HAS_FOOD = false;
-
   /*
    *  Possible types of the cell
    */
@@ -38,7 +36,7 @@ public:
 
     m_homePheromone =
         std::min(m_homePheromone + 1.0f / ((sourceDist + 1.0f) *
-                                           (0.5f * traveledDistance + 1.0f)),
+                                           (0.8f * traveledDistance + 1.0f)),
                  1.0f);
   }
 
@@ -51,7 +49,7 @@ public:
 
     m_foodPheromone =
         std::min(m_foodPheromone + 1.0f / ((sourceDist + 1.0f) *
-                                           (0.5f * traveledDistance + 1.0f)),
+                                           (0.8f * traveledDistance + 1.0f)),
                  1.0f);
   }
 
@@ -59,8 +57,8 @@ public:
    *  TODO
    */
   void decrementPheromones() {
-    m_homePheromone = std::max(m_homePheromone - 0.001f, 0.0f);
-    m_foodPheromone = std::max(m_foodPheromone - 0.001f, 0.0f);
+    m_homePheromone = std::max(m_homePheromone - 0.005f, 0.0f);
+    m_foodPheromone = std::max(m_foodPheromone - 0.005f, 0.0f);
   }
 
   void clearPheromones() {
