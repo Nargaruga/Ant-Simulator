@@ -3,19 +3,6 @@
 
 AntSimulator::AntSimulator(int seed) : m_seed(seed), m_rng(seed) {}
 
-void AntSimulator::setupEnvironment(Grid<bool> cave) {
-  m_grid.resize(cave.getRows(), cave.getCols());
-
-  for (int x = 0; x < cave.getCols(); x++) {
-    for (int y = 0; y < cave.getRows(); y++) {
-      if (cave.getCell(x, y).getData())
-        m_grid.setCell(x, y, SimCellData(SimCellData::Type::ROCK));
-      else
-        m_grid.setCell(x, y, SimCellData(SimCellData::Type::FLOOR));
-    }
-  }
-}
-
 void AntSimulator::initialize() {
   reset();
 

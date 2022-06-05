@@ -81,6 +81,35 @@ public:
    */
   float getFoodPheromone() const { return m_foodPheromone; }
 
+  // TODO
+  QColor getColor() const {
+    switch (m_type) {
+    case SimCellData::Type::ANT: {
+      return antColor;
+    }
+    case SimCellData::Type::FLOOR: {
+      QColor pheromoneColor =
+          blend(homePheromoneColor, foodPheromoneColor,
+                0.5f + 0.5f * m_foodPheromone - 0.5f * m_homePheromone);
+
+      return blend(floorColor, pheromoneColor,
+                   (m_foodPheromone + m_homePheromone) / 2.0f);
+    }
+    case SimCellData::Type::FOOD: {
+      return foodColor;
+    }
+    case SimCellData::Type::ROCK: {
+      return rockColor;
+    }
+    case SimCellData::Type::NEST: {
+      return nestColor;
+    }
+    default: {
+      return QColor();
+    }
+    }
+  }
+
 private:
   Type m_type;
   float m_homePheromone = 0.0f;

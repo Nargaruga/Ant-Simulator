@@ -18,10 +18,10 @@ public:
 
 public slots:
 
-  /*
-   *  Build the simulation environment from the cave
-   */
-  void setupEnvironment(Grid<bool> cave);
+  void setup(Grid<SimCellData> grid) {
+    reset();
+    m_grid = grid;
+  }
 
   /*
    *  Sets up the initial state of the population

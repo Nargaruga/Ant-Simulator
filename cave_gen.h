@@ -2,6 +2,7 @@
 #define CAVEGEN_H
 
 #include "grid.h"
+#include "sim_cell_data.h"
 #include <QObject>
 #include <mutex>
 
@@ -9,6 +10,8 @@ class CaveGenerator : public QObject {
   Q_OBJECT
 
 public:
+  enum Mode { MOORE, NEUMANN };
+
   /*
    *  Creates a cave generator with the following parameters:
    *  - seed: seed for the initial configuration
@@ -19,7 +22,7 @@ public:
    *  - steps: number of iterations (0 <= steps)
    */
   CaveGenerator(int seed = 0, int rockRatio = 60, int threshold = 5,
-                int steps = 8);
+                int steps = 8, int radius = 1);
 
   /*
    *  Returns the seed parameter
@@ -43,7 +46,9 @@ public:
    * Returns a pair containing the minimum and maximum values for the threshold
    * parameter
    */
-  std::pair<int, int> getThresholdRange() const { return std::pair(0, 8); }
+  std::pair<int, int> getThresholdRange() const {
+    return std::pair(0, INT_MAX);
+  }
 
   /*
    *  Returns the rockRatio parameter
@@ -67,6 +72,14 @@ public:
    */
   std::pair<int, int> getStepsRange() const { return std::pair(0, INT_MAX); }
 
+  int getRadius() const { return m_radius; }
+
+  /*
+   * Returns a pair containing the minimum and maximum values for the radius
+   * parameter
+   */
+  std::pair<int, int> getRadiusRange() const { return std::pair(0, INT_MAX); }
+
   /*
    *  Sets the seed to `seed`
    */
@@ -87,6 +100,18 @@ public:
    */
   void setSteps(int steps) { m_steps = steps; }
 
+  void setMooreMode(bool checked) {
+    if (checked)
+      m_mode = MOORE;
+  }
+
+  void setNeumannMode(bool checked) {
+    if (checked)
+      m_mode = NEUMANN;
+  }
+
+  void setRadius(int radius) { m_radius = radius; }
+
 public slots:
   /*
    *  Generates a new cave based on the generator's parameters.
@@ -95,13 +120,15 @@ public slots:
   void generateCave(int rows, int cols);
 
 signals:
-  void gridReady(Grid<bool> grid);
+  void gridReady(Grid<SimCellData> grid);
 
 private:
   int m_seed;      // Seed for the initial configuration
   int m_rockRatio; // Amount of rocks in the initial configuration
   int m_threshold; // Rock threshold for the evolution rule
   int m_steps;     // Number of iteration steps
+  Mode m_mode = MOORE;
+  int m_radius;
 
   /*
    *  Sets up the initial state of `grid`, randomly assigning a state to
@@ -109,17 +136,19 @@ private:
    *  `m_seed` and the ratio `m_rockRatio`, which decides the likeliness of a
    *  cell to be initialized as rock
    */
-  void initialize(Grid<bool> &grid);
+  void initialize(Grid<SimCellData> &grid);
 
   /*
    *  Performs one step of the CA simulation on `grid`
    */
-  void step(Grid<bool> &grid);
+  void step(Grid<SimCellData> &grid);
 
   /*
    *  Performs `m_steps` steps of the CA simulation on `m_grid`
    */
-  void simulate(Grid<bool> &grid);
+  void simulate(Grid<SimCellData> &grid);
+
+  void smooth(Grid<SimCellData> &grid);
 };
 
 #endif
