@@ -29,6 +29,58 @@ MainWindow::~MainWindow() {
   delete m_timer;
 }
 
+void MainWindow::prepareGUI() {
+  // Set up spin boxes
+  m_gui->seedSB->setRange(m_gen.getSeedRange().first,
+                          m_gen.getSeedRange().second);
+  m_gui->seedSB->setValue(m_gen.getSeed());
+
+  m_gui->thresholdSB->setRange(m_gen.getThresholdRange().first,
+                               m_gen.getThresholdRange().second);
+  m_gui->thresholdSB->setValue(m_gen.getThreshold());
+
+  m_gui->rockRatioSB->setRange(m_gen.getRockRatioRange().first,
+                               m_gen.getRockRatioRange().second);
+  m_gui->rockRatioSB->setValue(m_gen.getRockRatio());
+
+  m_gui->stepsSB->setRange(m_gen.getStepsRange().first,
+                           m_gen.getStepsRange().second);
+  m_gui->stepsSB->setValue(m_gen.getSteps());
+
+  m_gui->radiusSB->setRange(m_gen.getRadiusRange().first,
+                            m_gen.getRadiusRange().second);
+  m_gui->radiusSB->setValue(m_gen.getRadius());
+
+  m_gui->antsSB->setRange(m_sim.getMaxAntsRange().first,
+                          m_sim.getMaxAntsRange().second);
+  m_gui->antsSB->setValue(m_sim.getMaxAnts());
+
+  m_gui->phStrengthSl->setRange(m_sim.getPhStrengthRange().first,
+                                m_sim.getPhStrengthRange().second);
+  m_gui->phStrengthSl->setValue(m_sim.getPhStrength());
+
+  m_gui->phSpreadSl->setRange(m_sim.getPhSpreadRange().first,
+                              m_sim.getPhSpreadRange().second);
+  m_gui->phSpreadSl->setValue(m_sim.getPhSpread());
+
+  m_gui->phDecaySl->setRange(m_sim.getPhDecayRange().first,
+                             m_sim.getPhDecayRange().second);
+  m_gui->phDecaySl->setValue(m_sim.getPhDecay());
+
+  // Setup the simulation speed dial
+  m_gui->speedDial->setValue(m_simSpeed);
+
+  // Setup the scene
+  m_scene = new CustomGraphicsScene();
+  m_scene->setSceneRect(QRect(0, 0, m_cols * m_cellSide, m_rows * m_cellSide));
+
+  // Setup the QtGraphicsView which will host the scene
+  m_gui->graphicsView->setMinimumSize(
+      QSize(m_cols * m_cellSide, m_rows * m_cellSide));
+  m_gui->graphicsView->setDragMode(QGraphicsView::RubberBandDrag);
+  m_gui->graphicsView->setScene(m_scene);
+}
+
 void MainWindow::connectSlots() {
 
   // Cave generation
@@ -38,7 +90,7 @@ void MainWindow::connectSlots() {
   connect(this, &MainWindow::startCaveGeneration, &m_gen,
           &CaveGenerator::generateCave);
 
-  connect(&m_gen, &CaveGenerator::gridReady, this, &MainWindow::onGridReady);
+  connect(&m_gen, &CaveGenerator::gridReady, this, &MainWindow::onCaveReady);
 
   connect(m_gui->seedSB, &QSpinBox::valueChanged, &m_gen,
           &CaveGenerator::setSeed);
@@ -73,16 +125,27 @@ void MainWindow::connectSlots() {
 
   connect(this, &MainWindow::initializeSim, &m_sim, &AntSimulator::initialize);
 
-  connect(m_timer, &QTimer::timeout, this, &MainWindow::onTimeout);
+  connect(m_timer, &QTimer::timeout, &m_sim, &AntSimulator::step);
 
-  connect(this, &MainWindow::performSimStep, &m_sim, &AntSimulator::step);
-
-  connect(&m_sim, &AntSimulator::gridReady, this, &MainWindow::onGridReady);
-
-  connect(&m_gen, &CaveGenerator::gridReady, &m_sim, &AntSimulator::setup);
+  connect(&m_sim, &AntSimulator::gridReady, this, &MainWindow::onSimReady);
 
   connect(&m_sim, &AntSimulator::updateFoodCount, this,
           &MainWindow::onFoodUpdated);
+
+  connect(m_gui->antsSB, &QSpinBox::valueChanged, &m_sim,
+          &AntSimulator::setMaxAnts);
+
+  connect(m_gui->speedDial, &QDial::valueChanged, this,
+          &MainWindow::setSimSpeed);
+
+  connect(m_gui->phStrengthSl, &QSlider::valueChanged, &m_sim,
+          &AntSimulator::setPhStrength);
+
+  connect(m_gui->phSpreadSl, &QSlider::valueChanged, &m_sim,
+          &AntSimulator::setPhSpread);
+
+  connect(m_gui->phDecaySl, &QSlider::valueChanged, &m_sim,
+          &AntSimulator::setPhDecay);
 
   // Canvas
   connect(m_scene, &CustomGraphicsScene::mouseReleased, this,
@@ -92,43 +155,15 @@ void MainWindow::connectSlots() {
 
   connect(m_gui->zoomSlider, &QAbstractSlider::valueChanged, this,
           &MainWindow::updateZoom);
-}
 
-void MainWindow::prepareGUI() {
-  // Set up spin boxes
-  m_gui->seedSB->setRange(m_gen.getSeedRange().first,
-                          m_gen.getSeedRange().second);
-  m_gui->seedSB->setValue(m_gen.getSeed());
+  // GUI control
+  connect(&m_gen, &CaveGenerator::gridReady, this, &MainWindow::allowSimInit);
 
-  m_gui->thresholdSB->setRange(m_gen.getThresholdRange().first,
-                               m_gen.getThresholdRange().second);
-  m_gui->thresholdSB->setValue(m_gen.getThreshold());
+  connect(&m_gen, &CaveGenerator::gridReady, this,
+          &MainWindow::revokeSimControl);
 
-  m_gui->rockRatioSB->setRange(m_gen.getRockRatioRange().first,
-                               m_gen.getRockRatioRange().second);
-  m_gui->rockRatioSB->setValue(m_gen.getRockRatio());
-
-  m_gui->stepsSB->setRange(m_gen.getStepsRange().first,
-                           m_gen.getStepsRange().second);
-  m_gui->stepsSB->setValue(m_gen.getSteps());
-
-  m_gui->radiusSB->setRange(m_gen.getRadiusRange().first,
-                            m_gen.getRadiusRange().second);
-  m_gui->radiusSB->setValue(m_gen.getRadius());
-
-  // Setup the scene
-  m_scene = new CustomGraphicsScene();
-  m_scene->setSceneRect(QRect(0, 0, m_cols * m_cellSide, m_rows * m_cellSide));
-
-  // Setup the QtGraphicsView which will host the scene
-  m_gui->graphicsView->setMinimumSize(
-      QSize(m_cols * m_cellSide, m_rows * m_cellSide));
-  m_gui->graphicsView->setHorizontalScrollBarPolicy(
-      Qt::ScrollBarAsNeeded); // TODO useless
-  m_gui->graphicsView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-  m_gui->graphicsView->setDragMode(QGraphicsView::RubberBandDrag);
-  m_gui->graphicsView->setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
-  m_gui->graphicsView->setScene(m_scene);
+  connect(&m_sim, &AntSimulator::initialized, this,
+          &MainWindow::allowSimControl);
 }
 
 void MainWindow::drawGrid(Grid<SimCellData> grid) {
@@ -157,14 +192,42 @@ void MainWindow::onNewCaveRequested() {
 void MainWindow::onSimInitRequested() { emit initializeSim(); }
 
 void MainWindow::onSimStartRequested() {
-  m_timer->start(100); // milliseconds
+  m_timer->start(1000 / m_simSpeed); // milliseconds
 }
 
 void MainWindow::onSimStopRequested() { m_timer->stop(); }
 
-void MainWindow::onTimeout() { emit performSimStep(); }
+void MainWindow::allowSimInit() { m_gui->initSimBtn->setEnabled(true); };
 
-void MainWindow::onGridReady(Grid<SimCellData> grid) {
+void MainWindow::allowSimControl() {
+  m_gui->startSimBtn->setEnabled(true);
+  m_gui->stopSimBtn->setEnabled(true);
+}
+
+void MainWindow::revokeSimControl() {
+  m_gui->startSimBtn->setEnabled(false);
+  m_gui->stopSimBtn->setEnabled(false);
+}
+
+void MainWindow::setSimSpeed(int speed) {
+  if (speed < 1)
+    return;
+
+  m_simSpeed = speed;
+  if (m_timer->isActive())
+    m_timer->start(1000 / speed);
+}
+
+void MainWindow::onCaveReady(Grid<SimCellData> grid) {
+  m_timer->stop();
+  m_sim.setup(grid);
+
+  m_scene->clear();
+  drawGrid(grid);
+  m_scene->update();
+}
+
+void MainWindow::onSimReady(Grid<SimCellData> grid) {
   m_scene->clear();
   drawGrid(grid);
   m_scene->update();

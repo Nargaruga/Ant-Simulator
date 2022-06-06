@@ -33,9 +33,7 @@ public:
    * Returns a pair containing the minimum and maximum values for the seed
    * parameter
    */
-  std::pair<int, int> getSeedRange() const {
-    return std::pair(INT_MIN, INT_MAX);
-  }
+  std::pair<int, int> getSeedRange() const { return {INT_MIN, INT_MAX}; }
 
   /*
    *  Returns the threshold parameter
@@ -46,9 +44,7 @@ public:
    * Returns a pair containing the minimum and maximum values for the threshold
    * parameter
    */
-  std::pair<int, int> getThresholdRange() const {
-    return std::pair(0, INT_MAX);
-  }
+  std::pair<int, int> getThresholdRange() const { return {0, INT_MAX}; }
 
   /*
    *  Returns the rockRatio parameter
@@ -59,7 +55,7 @@ public:
    * Returns a pair containing the minimum and maximum values for the rockRatio
    * parameter
    */
-  std::pair<int, int> getRockRatioRange() const { return std::pair(0, 100); }
+  std::pair<int, int> getRockRatioRange() const { return {0, 100}; }
 
   /*
    *  Returns the steps parameter
@@ -70,7 +66,7 @@ public:
    * Returns a pair containing the minimum and maximum values for the steps
    * parameter
    */
-  std::pair<int, int> getStepsRange() const { return std::pair(0, INT_MAX); }
+  std::pair<int, int> getStepsRange() const { return {0, INT_MAX}; }
 
   int getRadius() const { return m_radius; }
 
@@ -78,7 +74,7 @@ public:
    * Returns a pair containing the minimum and maximum values for the radius
    * parameter
    */
-  std::pair<int, int> getRadiusRange() const { return std::pair(0, INT_MAX); }
+  std::pair<int, int> getRadiusRange() const { return std::pair{0, INT_MAX}; }
 
   /*
    *  Sets the seed to `seed`

@@ -1,7 +1,10 @@
 #include "ant_sim.h"
 #include "sim_cell_data.h"
 
-AntSimulator::AntSimulator(int seed) : m_seed(seed), m_rng(seed) {}
+void AntSimulator::setup(Grid<SimCellData> grid) {
+  reset();
+  m_grid = grid;
+}
 
 void AntSimulator::initialize() {
   reset();
@@ -17,14 +20,25 @@ void AntSimulator::initialize() {
   m_grid.setCell(m_nestX, m_nestY, tmp);
 
   emit gridReady(m_grid);
+  emit initialized();
 }
 
 void AntSimulator::step() {
-  // Spawn an ant if necessary
+  // Spawn or kill ants if necessary
   if (m_ants.size() < m_maxAnts) {
     m_ants.push_back(
         Ant(m_nestX, m_nestY,
             std::pair<int, int>(m_rng() % 3 - 1, m_rng() % 3 - 1)));
+  }
+
+  while (m_ants.size() > m_maxAnts) {
+    int victimIndex = m_rng() % m_ants.size();
+    const Ant &toRemove = m_ants[victimIndex];
+    SimCellData data =
+        m_grid.getCell(toRemove.getX(), toRemove.getY()).getData();
+    data.setType(SimCellData::Type::FLOOR);
+    m_grid.setCell(toRemove.getX(), toRemove.getY(), data);
+    m_ants.erase(m_ants.begin() + victimIndex);
   }
 
   // Update nest pheromone
@@ -32,7 +46,7 @@ void AntSimulator::step() {
       m_grid.getNeumannNeighbourhood(m_nestX, m_nestY, 2);
   for (Cell<SimCellData> cell : nestArea) {
     SimCellData data = cell.getData();
-    data.incrementHomePheromone(0, 0);
+    data.incrementHomePheromone(1.0f, 0, 0);
     m_grid.setCell(cell.getX(), cell.getY(), data);
   }
 
@@ -40,7 +54,7 @@ void AntSimulator::step() {
   for (int x = 0; x < m_grid.getCols(); x++) {
     for (int y = 0; y < m_grid.getRows(); y++) {
       SimCellData tmp = m_grid.getCell(x, y).getData();
-      tmp.decrementPheromones();
+      tmp.decrementPheromones(m_phDecay);
       m_grid.setCell(x, y, tmp);
     }
   }
@@ -106,7 +120,7 @@ void AntSimulator::step() {
 
 void AntSimulator::spreadPheromone(Ant ant) {
   std::vector<Cell<SimCellData>> neighbourhood =
-      m_grid.getNeumannNeighbourhood(ant.getX(), ant.getY(), 3);
+      m_grid.getNeumannNeighbourhood(ant.getX(), ant.getY(), m_phSpread);
   neighbourhood.push_back(m_grid.getCell(ant.getX(), ant.getY()));
 
   for (Cell<SimCellData> cell : neighbourhood) {
@@ -114,9 +128,11 @@ void AntSimulator::spreadPheromone(Ant ant) {
     int distFromSource =
         m_grid.manhattanDist(cell.getX(), cell.getY(), ant.getX(), ant.getY());
     if (ant.getMode() == Ant::RETURN && ant.hasFood())
-      data.incrementFoodPheromone(distFromSource, ant.getTraveledDistance());
+      data.incrementFoodPheromone(m_phStrength, distFromSource,
+                                  ant.getTraveledDistance());
     else if (ant.getMode() == Ant::SEEK)
-      data.incrementHomePheromone(distFromSource, ant.getTraveledDistance());
+      data.incrementHomePheromone(m_phStrength, distFromSource,
+                                  ant.getTraveledDistance());
     m_grid.setCell(cell.getX(), cell.getY(), data);
   }
 }

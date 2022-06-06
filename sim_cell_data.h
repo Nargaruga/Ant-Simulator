@@ -30,35 +30,37 @@ public:
   /*
    *  TODO
    */
-  void incrementHomePheromone(float sourceDist, float traveledDistance) {
+  void incrementHomePheromone(float strength, float sourceDist,
+                              float traveledDistance) {
     if (sourceDist < 0 || traveledDistance < 0)
       return;
 
     m_homePheromone =
-        std::min(m_homePheromone + 1.0f / ((sourceDist + 1.0f) *
-                                           (0.8f * traveledDistance + 1.0f)),
+        std::min(m_homePheromone + strength / (powf(sourceDist + 1.0f, 2) *
+                                               sqrtf(traveledDistance + 1.0f)),
                  1.0f);
   }
 
   /*
    *  TODO
    */
-  void incrementFoodPheromone(float sourceDist, float traveledDistance) {
+  void incrementFoodPheromone(float strength, float sourceDist,
+                              float traveledDistance) {
     if (sourceDist < 0 || traveledDistance < 0)
       return;
 
     m_foodPheromone =
-        std::min(m_foodPheromone + 1.0f / ((sourceDist + 1.0f) *
-                                           (0.8f * traveledDistance + 1.0f)),
+        std::min(m_foodPheromone + strength / (powf(sourceDist + 1.0f, 2) *
+                                               sqrtf(traveledDistance + 1.0f)),
                  1.0f);
   }
 
   /*
    *  TODO
    */
-  void decrementPheromones() {
-    m_homePheromone = std::max(m_homePheromone - 0.005f, 0.0f);
-    m_foodPheromone = std::max(m_foodPheromone - 0.005f, 0.0f);
+  void decrementPheromones(float rate) {
+    m_homePheromone = std::max(m_homePheromone - rate, 0.0f);
+    m_foodPheromone = std::max(m_foodPheromone - rate, 0.0f);
   }
 
   void clearPheromones() {

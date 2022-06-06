@@ -32,9 +32,17 @@ private slots:
 
   void onSimStopRequested();
 
-  void onGridReady(Grid<SimCellData> cave);
+  void allowSimInit();
 
-  void onTimeout();
+  void allowSimControl();
+
+  void revokeSimControl();
+
+  void setSimSpeed(int speed);
+
+  void onCaveReady(Grid<SimCellData> grid);
+
+  void onSimReady(Grid<SimCellData> grid);
 
   void onCanvasClick(QPointF coords);
 
@@ -56,6 +64,7 @@ private:
   CustomGraphicsScene *m_scene; // Scene depicted in the canvas
   CaveGenerator m_gen;
   AntSimulator m_sim;
+  int m_simSpeed = 5;
   QTimer *m_timer;     // Simulation timer
   int m_cols = 128;    // Number of grid columns
   int m_rows = 64;     // Number of grid rows

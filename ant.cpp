@@ -43,9 +43,7 @@ Ant::pickDestination(const std::vector<Cell<SimCellData>> &candidates,
         destination = neighbour;
         break;
       } else if (neighbour.getData().getFoodPheromone() >
-                     destination.getData().getFoodPheromone() ||
-                 neighbour.getData().getHomePheromone() <
-                     destination.getData().getHomePheromone())
+                 destination.getData().getFoodPheromone())
         destination = neighbour;
     }
   }
