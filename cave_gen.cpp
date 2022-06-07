@@ -80,3 +80,11 @@ void CaveGenerator::simulate(Grid<SimCellData> &grid) {
     step(grid);
   }
 }
+
+void CaveGenerator::resetParams() {
+  m_seed = 0;
+  m_rockRatio = 60;
+  m_threshold = 5;
+  m_steps = 8;
+  m_radius = 1;
+}

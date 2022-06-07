@@ -9,6 +9,7 @@ void AntSimulator::setup(Grid<SimCellData> grid) {
 void AntSimulator::initialize() {
   reset();
 
+  // Find a place to spawn the nest
   do {
     m_nestX = m_rng() % m_grid.getCols();
     m_nestY = m_rng() % m_grid.getRows();
@@ -24,13 +25,14 @@ void AntSimulator::initialize() {
 }
 
 void AntSimulator::step() {
-  // Spawn or kill ants if necessary
+  // Spawn ants
   if (m_ants.size() < m_maxAnts) {
-    m_ants.push_back(
-        Ant(m_nestX, m_nestY,
-            std::pair<int, int>(m_rng() % 3 - 1, m_rng() % 3 - 1)));
+    m_ants.push_back(Ant(m_nestX, m_nestY,
+                         std::pair<int, int>(m_rng() % 3 - 1, m_rng() % 3 - 1),
+                         m_maxAntSteps));
   }
 
+  // Kill excess ants
   while (m_ants.size() > m_maxAnts) {
     int victimIndex = m_rng() % m_ants.size();
     const Ant &toRemove = m_ants[victimIndex];
@@ -92,7 +94,7 @@ void AntSimulator::step() {
     spreadPheromone(ant);
 
     // Update the ant
-    ant.move(destination.getX(), destination.getY(), m_rng);
+    ant.move(destination.getX(), destination.getY());
     if (!ant.hasFood() &&
         destination.getData().getType() == SimCellData::Type::FOOD) {
       ant.pickUpFood();
@@ -125,6 +127,7 @@ void AntSimulator::spreadPheromone(Ant ant) {
 
   for (Cell<SimCellData> cell : neighbourhood) {
     SimCellData data = cell.getData();
+    // Pheromone strength decreases with distance from the source
     int distFromSource =
         m_grid.manhattanDist(cell.getX(), cell.getY(), ant.getX(), ant.getY());
     if (ant.getMode() == Ant::RETURN && ant.hasFood())
@@ -145,6 +148,7 @@ void AntSimulator::onCellClicked(int x, int y) {
       m_grid.getNeumannNeighbourhood(x, y, 2);
   neighbourhood.push_back(m_grid.getCell(x, y));
 
+  // Place food
   for (Cell<SimCellData> cell : neighbourhood) {
     SimCellData data = cell.getData();
     if (data.getType() == SimCellData::FLOOR) {
@@ -159,12 +163,19 @@ void AntSimulator::onCellClicked(int x, int y) {
   emit gridReady(m_grid);
 }
 
+void AntSimulator::setMaxAntSteps(int m) {
+  m_maxAntSteps = m;
+  for (Ant &ant : m_ants) {
+    ant.setMaxSteps(m);
+  }
+}
+
 void AntSimulator::reset() {
   m_nestX = -1;
   m_nestY = -1;
   m_ants.clear();
 
-  // Simulate pheromone evaporation
+  // Clears pheromones
   for (int x = 0; x < m_grid.getCols(); x++) {
     for (int y = 0; y < m_grid.getRows(); y++) {
       SimCellData tmp = m_grid.getCell(x, y).getData();
@@ -177,4 +188,11 @@ void AntSimulator::reset() {
       m_grid.setCell(x, y, tmp);
     }
   }
+}
+
+void AntSimulator::resetParams() {
+  m_maxAnts = 20;
+  m_phStrength = 1.0f;
+  m_phSpread = 2;
+  m_phDecay = 0.01f;
 }

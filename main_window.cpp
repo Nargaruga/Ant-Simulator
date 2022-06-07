@@ -1,6 +1,7 @@
 #include "main_window.h"
 #include "ui_main_window.h"
 #include <QGraphicsRectItem>
+#include <QStyle>
 #include <iostream>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -8,6 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
   m_gui->setupUi(this);
   m_timer = new QTimer(this);
 
+  // Cave generation and ant simulation are done on separate threads
   m_gen.moveToThread(&m_genWorker);
   m_sim.moveToThread(&m_simWorker);
 
@@ -25,12 +27,34 @@ MainWindow::~MainWindow() {
   m_genWorker.wait();
 
   delete m_gui;
+  m_scene->clear();
   delete m_scene;
   delete m_timer;
 }
 
 void MainWindow::prepareGUI() {
-  // Set up spin boxes
+  // Setup widgets
+  setGenGUIParams();
+  setSimGUIParams();
+
+  m_gui->resetCaveParamBtn->setIcon(
+      QApplication::style()->standardIcon(QStyle::SP_BrowserReload));
+
+  m_gui->resetSimParamBtn->setIcon(
+      QApplication::style()->standardIcon(QStyle::SP_BrowserReload));
+
+  // Setup the scene
+  m_scene = new CustomGraphicsScene();
+  m_scene->setSceneRect(QRect(0, 0, m_cols * m_cellSide, m_rows * m_cellSide));
+
+  // Setup the QtGraphicsView which will host the scene
+  m_gui->graphicsView->setMinimumSize(
+      QSize(m_cols * m_cellSide, m_rows * m_cellSide));
+  m_gui->graphicsView->setDragMode(QGraphicsView::RubberBandDrag);
+  m_gui->graphicsView->setScene(m_scene);
+}
+
+void MainWindow::setGenGUIParams() {
   m_gui->seedSB->setRange(m_gen.getSeedRange().first,
                           m_gen.getSeedRange().second);
   m_gui->seedSB->setValue(m_gen.getSeed());
@@ -51,9 +75,17 @@ void MainWindow::prepareGUI() {
                             m_gen.getRadiusRange().second);
   m_gui->radiusSB->setValue(m_gen.getRadius());
 
+  m_gui->mooreRad->setChecked(true);
+}
+
+void MainWindow::setSimGUIParams() {
   m_gui->antsSB->setRange(m_sim.getMaxAntsRange().first,
                           m_sim.getMaxAntsRange().second);
   m_gui->antsSB->setValue(m_sim.getMaxAnts());
+
+  m_gui->maxDistSB->setRange(m_sim.getMaxAntStepsRange().first,
+                             m_sim.getMaxAntStepsRange().second);
+  m_gui->maxDistSB->setValue(m_sim.getMaxAntSteps());
 
   m_gui->phStrengthSl->setRange(m_sim.getPhStrengthRange().first,
                                 m_sim.getPhStrengthRange().second);
@@ -67,18 +99,7 @@ void MainWindow::prepareGUI() {
                              m_sim.getPhDecayRange().second);
   m_gui->phDecaySl->setValue(m_sim.getPhDecay());
 
-  // Setup the simulation speed dial
-  m_gui->speedDial->setValue(m_simSpeed);
-
-  // Setup the scene
-  m_scene = new CustomGraphicsScene();
-  m_scene->setSceneRect(QRect(0, 0, m_cols * m_cellSide, m_rows * m_cellSide));
-
-  // Setup the QtGraphicsView which will host the scene
-  m_gui->graphicsView->setMinimumSize(
-      QSize(m_cols * m_cellSide, m_rows * m_cellSide));
-  m_gui->graphicsView->setDragMode(QGraphicsView::RubberBandDrag);
-  m_gui->graphicsView->setScene(m_scene);
+  m_gui->speedDial->setValue(5);
 }
 
 void MainWindow::connectSlots() {
@@ -113,6 +134,9 @@ void MainWindow::connectSlots() {
   connect(m_gui->neumannRad, &QRadioButton::toggled, &m_gen,
           &CaveGenerator::setNeumannMode);
 
+  connect(m_gui->resetCaveParamBtn, &QPushButton::clicked, this,
+          &MainWindow::resetGenParams);
+
   // Population simulation
   connect(m_gui->startSimBtn, &QPushButton::clicked, this,
           &MainWindow::onSimStartRequested);
@@ -146,6 +170,12 @@ void MainWindow::connectSlots() {
 
   connect(m_gui->phDecaySl, &QSlider::valueChanged, &m_sim,
           &AntSimulator::setPhDecay);
+
+  connect(m_gui->resetSimParamBtn, &QPushButton::clicked, this,
+          &MainWindow::resetSimParams);
+
+  connect(m_gui->maxDistSB, &QSpinBox::valueChanged, &m_sim,
+          &AntSimulator::setMaxAntSteps);
 
   // Canvas
   connect(m_scene, &CustomGraphicsScene::mouseReleased, this,
@@ -252,4 +282,14 @@ void MainWindow::updateZoom() {
   matrix.scale(scale, scale);
 
   m_gui->graphicsView->setTransform(matrix);
+}
+
+void MainWindow::resetGenParams() {
+  m_gen.resetParams();
+  setGenGUIParams();
+}
+
+void MainWindow::resetSimParams() {
+  m_sim.resetParams();
+  setSimGUIParams();
 }

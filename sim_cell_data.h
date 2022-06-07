@@ -7,28 +7,29 @@
 #include <random>
 
 /*
- *  Data contained in a cell of the simulation's grid
+ *  Data contained in a cell of the simulation's grid.
  */
 class SimCellData {
 
 public:
   /*
-   *  Possible types of the cell
+   * Possible types of the cell.
    */
   enum Type { FLOOR, ROCK, ANT, FOOD, NEST };
 
   /*
-   *  Constructs a data object with the specified type
+   * Constructs a data object with the specified type.
    */
   SimCellData(Type type = Type::FLOOR) : m_type(type) {}
 
   /*
-   *  Sets the type of the cell
+   * Sets the type of the cell.
    */
   void setType(Type type) { m_type = type; }
 
   /*
-   *  TODO
+   * Increases the cell's home pheromone signal based on the distance from the
+   * source and the distance traveled by the emitter ant.
    */
   void incrementHomePheromone(float strength, float sourceDist,
                               float traveledDistance) {
@@ -42,7 +43,8 @@ public:
   }
 
   /*
-   *  TODO
+   * Increases the cell's food pheromone signal based on the distance from the
+   * source and the distance traveled by the emitter ant.
    */
   void incrementFoodPheromone(float strength, float sourceDist,
                               float traveledDistance) {
@@ -56,34 +58,37 @@ public:
   }
 
   /*
-   *  TODO
+   *  Simulates pheromone evaporation.
    */
   void decrementPheromones(float rate) {
     m_homePheromone = std::max(m_homePheromone - rate, 0.0f);
     m_foodPheromone = std::max(m_foodPheromone - rate, 0.0f);
   }
 
+  /*
+   * Sets all pheromone signals to 0.
+   */
   void clearPheromones() {
     m_homePheromone = 0.0f;
     m_foodPheromone = 0.0f;
   }
 
   /*
-   *  Returns the type of the cell
+   * Returns the type of the cell.
    */
   Type getType() const { return m_type; };
 
   /*
-   *  TODO
+   * Returns the cell's home pheromone level.
    */
   float getHomePheromone() const { return m_homePheromone; }
 
   /*
-   *  TODO
+   * Returns the cell's food pheromone level.
    */
   float getFoodPheromone() const { return m_foodPheromone; }
 
-  // TODO
+  // Returns the cell's color.
   QColor getColor() const {
     switch (m_type) {
     case SimCellData::Type::ANT: {
@@ -113,9 +118,9 @@ public:
   }
 
 private:
-  Type m_type;
-  float m_homePheromone = 0.0f;
-  float m_foodPheromone = 0.0f;
+  Type m_type;                  // Cell type
+  float m_homePheromone = 0.0f; // Home pheromone level
+  float m_foodPheromone = 0.0f; // Food pheromone level
 };
 
 #endif

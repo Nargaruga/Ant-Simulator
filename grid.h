@@ -5,16 +5,14 @@
 #include <memory>
 #include <vector>
 
-int manhattanDist(int x1, int y1, int x2, int y2);
-
 /*
- * A grid of cells with contents of type T
+ * A grid of cells with contents of type T.
  */
 template <typename T> class Grid {
 
 public:
   /*
-   *  Creates a grid with the specified number of rows and columns
+   *  Creates a grid with the specified number of rows and columns.
    */
   Grid(int rows = 0, int cols = 0) : m_rows(rows), m_cols(cols) {
     if (rows < 0 || cols < 0)
@@ -52,7 +50,7 @@ public:
   }
 
   /*
-   *  Computes the Manhattan distance between two points (x1, y1) and (x2, y2)
+   *  Computes the Manhattan distance between two points (x1, y1) and (x2, y2).
    */
   int manhattanDist(int x1, int y1, int x2, int y2) const {
     if (!areValid(x1, y1) || !areValid(x2, y2))
@@ -64,7 +62,7 @@ public:
   }
 
   /*
-   *  Sets the cell at column `x` and row `y` to `val`
+   *  Sets the cell at column `x` and row `y` to `val`.
    */
   void setCell(int x, int y, T val) {
     if (!areValid(x, y))
@@ -75,7 +73,7 @@ public:
 
   /*
    *  Returns true if the cell at column `x` and row `y` is on the grid's
-   *  border, false otherwise
+   *  border, false otherwise.
    */
   bool isBorder(int x, int y) const {
     if (x == 0 || x == m_cols - 1 || y == 0 || y == m_rows - 1)
@@ -85,7 +83,7 @@ public:
   }
 
   /*
-   *  Returns the i-th cell
+   *  Returns the i-th cell.
    */
   Cell<T> getCell(int i) const {
     if (i < 0 || i >= m_cols * m_rows)
@@ -95,7 +93,7 @@ public:
   }
 
   /*
-   *  Returns the cell at column `x` and row `y`
+   *  Returns the cell at column `x` and row `y`.
    */
   Cell<T> getCell(int x, int y) const {
     if (!areValid(x, y))
@@ -104,6 +102,9 @@ public:
     return m_cells[y * m_cols + x];
   }
 
+  /*
+   * Returns true if (x,y) is a cell in the grid, false otherwise.
+   */
   bool areValid(int x, int y) const {
     return x >= 0 && x < m_cols && y >= 0 && y < m_rows;
   }
@@ -111,7 +112,7 @@ public:
   /*
    *  Returns a vector containing the Moore neighbourhood of the cell found
    *  at column `x` and row `y`. `radius` denotes the radius of the
-   *  neighbourhood
+   *  neighbourhood.
    */
   std::vector<Cell<T>> getMooreNeighbourhood(int x, int y,
                                              int radius = 1) const {
@@ -153,6 +154,10 @@ public:
     return neighbourhood;
   }
 
+  /*
+   * Returns a vector containing three cells computed based on the current
+   * position (x,y) and the direction `d`.
+   */
   std::vector<Cell<T>> getDirectionalNeighbourhood(int x, int y,
                                                    std::pair<int, int> d) {
     if (!areValid(x, y))
@@ -169,17 +174,17 @@ public:
   }
 
   /*
-   *  Returns the size of the grid
+   *  Returns the size of the grid.
    */
   int getSize() const { return m_rows * m_cols; }
 
   /*
-   *  Returns the number of columns
+   *  Returns the number of columns.
    */
   int getCols() const { return m_cols; }
 
   /*
-   *  Returns the number of rows
+   *  Returns the number of rows.
    */
   int getRows() const { return m_rows; }
 

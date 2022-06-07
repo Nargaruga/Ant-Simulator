@@ -114,6 +114,13 @@
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_5">
                 <item>
+                 <widget class="QPushButton" name="resetSimParamBtn">
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item>
                  <widget class="QLabel" name="antsLbl">
                   <property name="text">
                    <string>Ants</string>
@@ -122,6 +129,16 @@
                 </item>
                 <item>
                  <widget class="QSpinBox" name="antsSB"/>
+                </item>
+                <item>
+                 <widget class="QLabel" name="maxDistLbl">
+                  <property name="text">
+                   <string>Maximum distance</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="maxDistSB"/>
                 </item>
                 <item>
                  <widget class="QLabel" name="phStrengthLbl">
@@ -266,6 +283,13 @@
              <string>Cave Generation</string>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_2">
+             <item>
+              <widget class="QPushButton" name="resetCaveParamBtn">
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
              <item>
               <widget class="QLabel" name="seedLbl">
                <property name="text">

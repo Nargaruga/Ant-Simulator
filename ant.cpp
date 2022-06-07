@@ -1,6 +1,6 @@
 #include "ant.h"
 
-void Ant::move(int x, int y, std::default_random_engine &rng) {
+void Ant::move(int x, int y) {
   int dX = x - m_x;
   int dY = y - m_y;
 
@@ -8,6 +8,7 @@ void Ant::move(int x, int y, std::default_random_engine &rng) {
 
   m_traveledDistance++;
   if (m_mode == SEEK) {
+    // The search is unfruitful, abort it and return home
     if (m_traveledDistance >= m_maxSteps) {
       m_mode = RETURN;
       m_traveledDistance = 0;

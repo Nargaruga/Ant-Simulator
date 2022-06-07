@@ -4,6 +4,9 @@
 #include "qtmetamacros.h"
 #include <QGraphicsScene>
 
+/*
+ * Custom graphics scene with click handling.
+ */
 class CustomGraphicsScene : public QGraphicsScene {
   Q_OBJECT
 public:
@@ -13,12 +16,10 @@ protected:
   void mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent);
 
 signals:
+  /*
+   * Emitted on mouse release to transmit the coordinates of the click.
+   */
   void mouseReleased(QPointF coords);
-
-private:
-  bool m_panning = false;
-  int m_panStartX;
-  int m_panStartY;
 };
 
 #endif // CUSTOM_GRAPHICS_SCENE_H

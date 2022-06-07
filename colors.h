@@ -3,6 +3,10 @@
 
 #include <QColor>
 
+/*
+ * Color constants and utilities.
+ */
+
 const QColor floorColor = QColor(96, 96, 96);
 const QColor rockColor = QColor(64, 64, 64);
 const QColor nestColor = QColor(50, 50, 200);
@@ -13,7 +17,7 @@ const QColor homePheromoneColor = QColor(37, 244, 244);
 const QColor foodPheromoneColor = QColor(230, 180, 70);
 
 /*
- * Blends the colors `a` and `b` with ratio `r`
+ * Blends the colors `a` and `b` with ratio `r`.
  */
 inline QColor blend(QColor a, QColor b, float r) {
   if (r <= 0)
