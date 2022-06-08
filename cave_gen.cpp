@@ -13,8 +13,7 @@ int countNearbyRocks(std::vector<Cell<SimCellData>> neighbours) {
       count++;
   }
 
-  // For border cells, missing neighbours count as walls
-  return count + (8 - neighbours.size());
+  return count;
 }
 
 CaveGenerator::CaveGenerator(int seed, int rockRatio, int threshold, int steps,
@@ -62,12 +61,17 @@ void CaveGenerator::step(Grid<SimCellData> &grid) {
         neighbourhood = grid.getNeumannNeighbourhood(x, y, m_radius);
       }
 
-      int neighbours = countNearbyRocks(neighbourhood);
-
-      if (neighbours >= m_threshold) {
-        updatedGrid.setCell(x, y, SimCellData::Type::ROCK);
+      if (grid.isBorder(x, y)) {
+        // Border cells are always rock
+        updatedGrid.setCell(x, y, SimCellData::ROCK);
       } else {
-        updatedGrid.setCell(x, y, SimCellData::Type::FLOOR);
+        int neighbours = countNearbyRocks(neighbourhood);
+
+        if (neighbours >= m_threshold) {
+          updatedGrid.setCell(x, y, SimCellData::Type::ROCK);
+        } else {
+          updatedGrid.setCell(x, y, SimCellData::Type::FLOOR);
+        }
       }
     }
   }
